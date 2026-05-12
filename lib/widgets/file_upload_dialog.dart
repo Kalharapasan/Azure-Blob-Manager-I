@@ -27,6 +27,9 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Upload File'),
+      content: SingleChildScrollView(
+        
+      ),
     );
   }
 }
