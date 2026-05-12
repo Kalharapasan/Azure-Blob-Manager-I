@@ -6,5 +6,12 @@ class FileItem {
   final DateTime uploadedAt;
   final bool isPrivate;
 
-  FileItem({})
+  FileItem({
+    required this.name,
+    required this.url,
+    required this.size,
+    required this.category,
+    required this.uploadedAt,
+    required this.isPrivate,
+  });
 }
