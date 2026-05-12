@@ -16,6 +16,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return ChangeNotifierProvider(
+      create: (_) => FileProvider(),
+      child: MaterialApp(
+        title: AppConfig.appName,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        home: const DashboardScreen(),
+      ),
+    );
   }
-}
+} 
