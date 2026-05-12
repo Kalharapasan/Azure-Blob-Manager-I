@@ -27,6 +27,10 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     'other',
   ];
 
+  setState(() {
+      _isUploading = true;
+      _uploadError = null;
+    });
 
   try {
       final file = File(_pickedFile!.path!);
