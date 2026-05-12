@@ -1,2 +1,6 @@
 enum FileCategory { video, image, music, document, other }
-extension FileCategoryExtension on FileCategory {}
+extension FileCategoryExtension on FileCategory {
+  String get displayName {
+    
+  }
+}
