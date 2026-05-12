@@ -72,19 +72,21 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
       return;
     }
 
-  setState(() {
+    setState(() {
       _isUploading = true;
       _uploadError = null;
     });
 
-  try {
+    try {
       final file = File(_pickedFile!.path!);
       final String fileName = _fileNameController.text;
       final String category = _selectedCategory!;
       final bool isPrivate = _isPrivate;
 
-      final String url = await Provider.of<FileProvider>(context, listen: false)
-          .uploadFile(file, fileName, category, isPrivate);
+      final String url = await Provider.of<FileProvider>(
+        context,
+        listen: false,
+      ).uploadFile(file, fileName, category, isPrivate);
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -98,6 +100,7 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
         _isUploading = false;
       });
     }
+  }
 
   @override
   Widget build(BuildContext context) {
