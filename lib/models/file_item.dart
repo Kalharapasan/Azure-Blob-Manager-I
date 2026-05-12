@@ -14,4 +14,6 @@ class FileItem {
     required this.uploadedAt,
     required this.isPrivate,
   });
+
+  factory FileItem.fromJson(Map<String, dynamic> json) {}
 }
