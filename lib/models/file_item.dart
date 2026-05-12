@@ -27,8 +27,13 @@ class FileItem {
   }
 
   Map<String, dynamic> toJson() {
-    return{
-
+    return {
+      'name': name,
+      'url': url,
+      'size': size,
+      'category': category,
+      'uploadedAt': uploadedAt.toIso8601String(),
+      'isPrivate': isPrivate,
     };
   }
 }
