@@ -25,4 +25,8 @@ class FileItem {
       isPrivate: json['isPrivate'] as bool,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    
+  }
 }
