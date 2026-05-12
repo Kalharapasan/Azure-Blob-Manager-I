@@ -17,7 +17,17 @@ extension FileCategoryExtension on FileCategory {
   }
 
   String get icon {
-    
+    switch (this) {
+      case FileCategory.video:
+        return '🎬';
+      case FileCategory.image:
+        return '🖼️';
+      case FileCategory.music:
+        return '🎵';
+      case FileCategory.document:
+        return '📄';
+      case FileCategory.other:
+        return '📁';
+    }
   }
-
 }
