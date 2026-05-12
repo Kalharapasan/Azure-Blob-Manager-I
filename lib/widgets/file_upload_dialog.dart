@@ -12,6 +12,13 @@ class FileUploadDialog extends StatefulWidget {
 }
 
 class _FileUploadDialogState extends State<FileUploadDialog> {
+  final TextEditingController _fileNameController = TextEditingController();
+  String? _selectedCategory;
+  bool _isPrivate = false;
+  PlatformFile? _pickedFile;
+  bool _isUploading = false;
+  String? _uploadError;
+
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
