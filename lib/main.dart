@@ -4,6 +4,13 @@ import 'config/app_config.dart';
 import 'providers/file_provider.dart';
 import 'screens/dashboard_screen.dart';
 
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.load();
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
