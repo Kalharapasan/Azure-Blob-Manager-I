@@ -19,6 +19,8 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
   bool _isUploading = false;
   String? _uploadError;
 
+  final List<String> _categories = ['video', 'image', 'music', 'document', 'other'];
+
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
