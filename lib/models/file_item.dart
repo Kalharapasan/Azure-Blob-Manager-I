@@ -5,4 +5,6 @@ class FileItem {
   final String category;
   final DateTime uploadedAt;
   final bool isPrivate;
+
+  FileItem({})
 }
