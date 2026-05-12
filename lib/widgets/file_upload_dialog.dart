@@ -33,6 +33,23 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     super.dispose();
   }
 
+  Future<void> _pickFile() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _pickedFile = result.files.first;
+        // Auto-fill the file name if not already set
+        if (_fileNameController.text.isEmpty) {
+          _fileNameController.text = _pickedFile!.name;
+        }
+      });
+    }
+  }
+
   setState(() {
       _isUploading = true;
       _uploadError = null;
