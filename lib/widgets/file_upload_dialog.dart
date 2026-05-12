@@ -27,6 +27,29 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     'other',
   ];
 
+
+  try {
+      final file = File(_pickedFile!.path!);
+      final String fileName = _fileNameController.text;
+      final String category = _selectedCategory!;
+      final bool isPrivate = _isPrivate;
+
+      final String url = await Provider.of<FileProvider>(context, listen: false)
+          .uploadFile(file, fileName, category, isPrivate);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('File uploaded successfully: $url')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _uploadError = 'Upload failed: $e';
+        _isUploading = false;
+      });
+    }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
