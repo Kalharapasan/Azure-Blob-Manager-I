@@ -9,4 +9,8 @@ class AppConfig {
   static String get appName => dotenv.env['APP_NAME'] ?? 'Azure Blob Manager';
   static String get privateSectionPassword =>
       dotenv.env['PRIVATE_SECTION_PASSWORD'] ?? '';
+
+  static Future<void> load() async {
+    await dotenv.load(fileName: ".env");
+  }
 }
