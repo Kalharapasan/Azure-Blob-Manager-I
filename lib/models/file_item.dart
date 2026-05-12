@@ -27,6 +27,8 @@ class FileItem {
   }
 
   Map<String, dynamic> toJson() {
-    
+    return{
+
+    };
   }
 }
