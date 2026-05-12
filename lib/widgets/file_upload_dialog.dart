@@ -27,6 +27,12 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     'other',
   ];
 
+  @override
+  void dispose() {
+    _fileNameController.dispose();
+    super.dispose();
+  }
+
   setState(() {
       _isUploading = true;
       _uploadError = null;
