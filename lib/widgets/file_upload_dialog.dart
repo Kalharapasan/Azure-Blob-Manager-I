@@ -25,8 +25,8 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AboutDialog(
-      
+    return AlertDialog(
+      title: const Text('Upload File'),
     );
   }
 }
