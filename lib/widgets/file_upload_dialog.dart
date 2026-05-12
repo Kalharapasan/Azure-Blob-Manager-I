@@ -50,6 +50,28 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     }
   }
 
+  Future<void> _uploadFile() async {
+    if (_pickedFile == null) {
+      setState(() {
+        _uploadError = 'Please select a file to upload';
+      });
+      return;
+    }
+
+    if (_fileNameController.text.isEmpty) {
+      setState(() {
+        _uploadError = 'Please enter a file name';
+      });
+      return;
+    }
+
+    if (_selectedCategory == null) {
+      setState(() {
+        _uploadError = 'Please select a category';
+      });
+      return;
+    }
+
   setState(() {
       _isUploading = true;
       _uploadError = null;
