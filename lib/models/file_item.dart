@@ -16,6 +16,13 @@ class FileItem {
   });
 
   factory FileItem.fromJson(Map<String, dynamic> json) {
-    return FileItem(name: name, url: url, size: size, category: category, uploadedAt: uploadedAt, isPrivate: isPrivate);
+    return FileItem(
+      name: json['name'] as String,
+      url: json['url'] as String,
+      size: json['size'] as int,
+      category: json['category'] as String,
+      uploadedAt: DateTime.parse(json['uploadedAt'] as String),
+      isPrivate: json['isPrivate'] as bool,
+    );
   }
 }
