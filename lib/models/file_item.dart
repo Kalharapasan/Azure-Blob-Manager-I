@@ -15,5 +15,7 @@ class FileItem {
     required this.isPrivate,
   });
 
-  factory FileItem.fromJson(Map<String, dynamic> json) {}
+  factory FileItem.fromJson(Map<String, dynamic> json) {
+    return FileItem(name: name, url: url, size: size, category: category, uploadedAt: uploadedAt, isPrivate: isPrivate);
+  }
 }
