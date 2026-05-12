@@ -15,4 +15,9 @@ extension FileCategoryExtension on FileCategory {
         return 'Other';
     }
   }
+
+  String get icon {
+    
+  }
+
 }
