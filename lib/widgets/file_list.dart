@@ -71,6 +71,11 @@ class FileItemWidget extends StatelessWidget {
   }
 
   Widget _getFileIcon(String category) {
-    
+
   }
+
+  Future<void> _deleteFile(BuildContext context, FileItem file) async {
+
+  }
+  
 }
