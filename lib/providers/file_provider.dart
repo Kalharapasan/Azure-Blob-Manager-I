@@ -4,6 +4,10 @@ import '../models/file_item.dart';
 import '../services/azure_blob_service.dart';
 
 class FileProvider extends ChangeNotifier {
-
+  final AzureBlobService _azureBlobService = AzureBlobService();
+  List<FileItem> _files = [];
+  bool _isLoading = false;
+  String? _error;
+  Map<String, dynamic> _storageStats = {};
   
 }
