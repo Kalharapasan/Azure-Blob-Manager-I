@@ -39,8 +39,6 @@ class FileList extends StatelessWidget {
       );
     }
 
-    
-
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
