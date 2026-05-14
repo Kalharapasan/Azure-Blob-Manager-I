@@ -73,4 +73,10 @@ class FileProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<List<int>> downloadFile(String blobPath) {
+    return _azureBlobService.downloadFile(blobPath);
+  }
+
+  
 }
