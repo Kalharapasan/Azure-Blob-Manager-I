@@ -62,7 +62,7 @@ class AzureBlobService {
             'Failed to download file: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      
+      throw Exception('Failed to download file: $e');
     }
   }
 
