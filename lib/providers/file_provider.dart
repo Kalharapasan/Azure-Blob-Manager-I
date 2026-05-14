@@ -35,7 +35,11 @@ class FileProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    
+    try {
+      
+    } catch (e) {
+      
+    }
   }
 
 }
