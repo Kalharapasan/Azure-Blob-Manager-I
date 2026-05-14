@@ -89,6 +89,11 @@ class FileItemWidget extends StatelessWidget {
 
   Future<void> _openFile(BuildContext context, FileItem file) async {
 
+
+  }
+
+  Widget _getFilePreview(FileItem file) {
+
     
   }
 
