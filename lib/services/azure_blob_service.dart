@@ -25,6 +25,14 @@ class AzureBlobService {
 
       final Uri url = Uri.parse('$_baseUrl/$blobPath');
       final List<int> fileBytes = await file.readAsBytes();
+      final http.Response response = await http.put(
+        url,
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'Content-Type': _getContentType(fileName),
+        },
+        body: fileBytes,
+      );
     } catch (e) {
       
     }
