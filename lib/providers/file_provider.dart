@@ -41,7 +41,8 @@ class FileProvider extends ChangeNotifier {
       await loadFiles(category);
       return url;
     } catch (e) {
-      
+      _error = e.toString();
+      throw e;
     }
   }
 
