@@ -82,8 +82,12 @@ class FileProvider extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
+    try {
+      
+    } catch (e) {
+      
+    }
+
   }
-
-
 }
