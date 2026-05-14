@@ -24,6 +24,7 @@ class AzureBlobService {
           : '$category/$fileName';
 
       final Uri url = Uri.parse('$_baseUrl/$blobPath');
+      final List<int> fileBytes = await file.readAsBytes();
     } catch (e) {
       
     }
