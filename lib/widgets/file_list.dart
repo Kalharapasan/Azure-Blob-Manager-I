@@ -71,45 +71,44 @@ class FileItemWidget extends StatelessWidget {
   }
 
   Widget _getFileIcon(String category) {
-
+    switch (category) {
+      case 'video':
+        return const Icon(Icons.videocam, color: Colors.red);
+      case 'image':
+        return const Icon(Icons.image, color: Colors.blue);
+      case 'music':
+        return const Icon(Icons.music_note, color: Colors.green);
+      case 'document':
+        return const Icon(Icons.description, color: Colors.orange);
+      default:
+        return const Icon(Icons.file_present, color: Colors.grey);
+    }
   }
 
   Future<void> _deleteFile(BuildContext context, FileItem file) async {
-
-  }
-
-  if (confirmed == true) {
-
-    try {
-
-      final fileProvider = Provider.of<FileProvider>(context, listen: false);
+    
+    
+    if (confirmed == true) {
+      try {
+        final fileProvider = Provider.of<FileProvider>(context, listen: false);
         await fileProvider.deleteFile(
-            '${file.category}/${file.name}', file.category);
+          '${file.category}/${file.name}',
+          file.category,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File deleted successfully')),
         );
-      
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete file: $e')),
-      );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete file: $e')));
+      }
     }
-
   }
 
-  Future<void> _downloadFile(BuildContext context, FileItem file) async {
+  Future<void> _downloadFile(BuildContext context, FileItem file) async {}
 
+  Future<void> _openFile(BuildContext context, FileItem file) async {}
 
-  }
-
-  Future<void> _openFile(BuildContext context, FileItem file) async {
-
-
-  }
-
-  Widget _getFilePreview(FileItem file) {
-
-
-  }
-
+  Widget _getFilePreview(FileItem file) {}
 }
