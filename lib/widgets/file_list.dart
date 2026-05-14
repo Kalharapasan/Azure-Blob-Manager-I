@@ -8,18 +8,47 @@ class FileList extends StatelessWidget {
   final bool showPrivate;
   const FileList({super.key});
 
-  const FileList({
-    Key? key,
-    required this.category,
-    required this.showPrivate,
-  }) : super(key: key);
+  const FileList({Key? key, required this.category, required this.showPrivate})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-
-
     return Card(
-      
+      margin: const EdgeInsets.all(8),
+      child: ListTile(
+        leading: _getFileIcon(file.category),
+        title: Text(file.name),
+        subtitle: Text(
+          'Size: ${(file.size / 1024).toStringAsFixed(2)} KB\n'
+          'Uploaded: ${file.uploadedAt.toLocal()}',
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) async {
+            if (value == 'delete') {
+              await _deleteFile(context, file);
+            } else if (value == 'download') {
+              await _downloadFile(context, file);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'download',
+              child: ListTile(
+                leading: Icon(Icons.download),
+                title: Text('Download'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Delete'),
+              ),
+            ),
+          ],
+        ),
+        onTap: () => _openFile(context, file),
+      ),
     );
   }
 }
