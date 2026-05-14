@@ -19,7 +19,11 @@ class AzureBlobService {
   Future<String> uploadFile(File file, String fileName, String category, bool isPrivate) async {
 
     try {
-      
+      final String blobPath = isPrivate
+          ? 'private/$category/$fileName'
+          : '$category/$fileName';
+
+      final Uri url = Uri.parse('$_baseUrl/$blobPath');
     } catch (e) {
       
     }
