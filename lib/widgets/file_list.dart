@@ -77,5 +77,10 @@ class FileItemWidget extends StatelessWidget {
   Future<void> _deleteFile(BuildContext context, FileItem file) async {
 
   }
+
+  if (confirmed == true) {
+
+  }
+
   
 }
