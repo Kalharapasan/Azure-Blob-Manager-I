@@ -80,6 +80,19 @@ class FileItemWidget extends StatelessWidget {
 
   if (confirmed == true) {
 
+    try {
+
+      final fileProvider = Provider.of<FileProvider>(context, listen: false);
+        await fileProvider.deleteFile(
+            '${file.category}/${file.name}', file.category);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File deleted successfully')),
+        );
+      
+    } catch (e) {
+      
+    }
+
   }
 
   Future<void> _downloadFile(BuildContext context, FileItem file) async {
@@ -94,7 +107,7 @@ class FileItemWidget extends StatelessWidget {
 
   Widget _getFilePreview(FileItem file) {
 
-    
+
   }
 
 }
