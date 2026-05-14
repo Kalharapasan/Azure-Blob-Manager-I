@@ -10,7 +10,10 @@ class AzureBlobService {
   late final String _baseUrl;
 
   AzureBlobService() {
-    
+    _accountName = AppConfig.azureStorageAccount;
+    _sasToken = AppConfig.azureSaSToken;
+    _containerName = AppConfig.azureStorageContainer;
+    _baseUrl = 'https://$_accountName.blob.core.windows.net/$_containerName?$_sasToken';
   }
 
 }
