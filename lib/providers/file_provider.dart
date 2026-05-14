@@ -49,4 +49,8 @@ class FileProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteFile(String blobPath, String category) async {
+    
+  }
+
 }
