@@ -82,5 +82,9 @@ class FileItemWidget extends StatelessWidget {
 
   }
 
-  
+  Future<void> _downloadFile(BuildContext context, FileItem file) async {
+
+    
+  }
+
 }
