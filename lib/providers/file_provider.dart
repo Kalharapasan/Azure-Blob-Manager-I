@@ -84,7 +84,7 @@ class FileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      
+      _storageStats = await _azureBlobService.getStorageStats();
     } catch (e) {
       
     }
