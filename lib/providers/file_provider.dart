@@ -31,6 +31,10 @@ class FileProvider extends ChangeNotifier {
   }
 
   Future<String> uploadFile(File file, String fileName, String category, bool isPrivate) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     
   }
 
