@@ -33,6 +33,14 @@ class FileList extends StatelessWidget {
       displayedFiles = displayedFiles.where((file) => !file.isPrivate).toList();
     }
 
+    if (displayedFiles.isEmpty) {
+      return const Center(
+        child: Text('No files found'),
+      );
+    }
+
+    
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
