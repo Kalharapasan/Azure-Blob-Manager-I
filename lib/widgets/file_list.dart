@@ -69,4 +69,8 @@ class FileItemWidget extends StatelessWidget {
       ),
     );
   }
+
+  Widget _getFileIcon(String category) {
+    
+  }
 }
