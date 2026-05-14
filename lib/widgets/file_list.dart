@@ -136,7 +136,21 @@ class FileItemWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _openFile(BuildContext context, FileItem file) async {}
+  Future<void> _openFile(BuildContext context, FileItem file) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(file.name),
+        content: SingleChildScrollView(child: _getFilePreview(file)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _getFilePreview(FileItem file) {}
 }
