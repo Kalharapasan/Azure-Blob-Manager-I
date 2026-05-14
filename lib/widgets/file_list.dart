@@ -18,6 +18,12 @@ class FileList extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (fileProvider.error != null) {
+      return Center(
+        child: Text('Error: ${fileProvider.error}'),
+      );
+    }
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
