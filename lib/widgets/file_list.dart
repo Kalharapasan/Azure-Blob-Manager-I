@@ -24,6 +24,11 @@ class FileList extends StatelessWidget {
       );
     }
 
+    List<FileItem> displayedFiles = fileProvider.files;
+    if (category != 'all') {
+      displayedFiles = displayedFiles.where((file) => file.category == category).toList();
+    }
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
