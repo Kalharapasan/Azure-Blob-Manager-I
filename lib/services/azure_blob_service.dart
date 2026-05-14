@@ -9,6 +9,8 @@ class AzureBlobService {
   late final String _containerName;
   late final String _baseUrl;
 
-  
+  AzureBlobService() {
+    
+  }
 
 }
