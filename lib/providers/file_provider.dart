@@ -15,6 +15,9 @@ class FileProvider extends ChangeNotifier {
   String? get error => _error;
   Map<String, dynamic> get storageStats => _storageStats;
 
-  
+  Future<void> loadFiles(String category) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
 }
