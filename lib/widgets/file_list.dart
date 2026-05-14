@@ -19,24 +19,21 @@ class FileList extends StatelessWidget {
     }
 
     if (fileProvider.error != null) {
-      return Center(
-        child: Text('Error: ${fileProvider.error}'),
-      );
+      return Center(child: Text('Error: ${fileProvider.error}'));
     }
 
     List<FileItem> displayedFiles = fileProvider.files;
     if (category != 'all') {
-      displayedFiles = displayedFiles.where((file) => file.category == category).toList();
+      displayedFiles = displayedFiles
+          .where((file) => file.category == category)
+          .toList();
     }
-
     if (!showPrivate) {
       displayedFiles = displayedFiles.where((file) => !file.isPrivate).toList();
     }
 
     if (displayedFiles.isEmpty) {
-      return const Center(
-        child: Text('No files found'),
-      );
+      return const Center(child: Text('No files found'));
     }
 
     return ListView.builder(
