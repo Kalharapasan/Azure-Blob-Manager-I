@@ -36,7 +36,10 @@ class FileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      
+      final String url = await _azureBlobService.uploadFile(
+          file, fileName, category, isPrivate);
+      await loadFiles(category);
+      return url;
     } catch (e) {
       
     }
