@@ -20,4 +20,13 @@ class FileProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    try {
+      _files = await _azureBlobService.listFiles(category);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
