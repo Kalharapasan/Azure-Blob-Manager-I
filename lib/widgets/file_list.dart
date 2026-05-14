@@ -8,6 +8,12 @@ class FileList extends StatelessWidget {
   final bool showPrivate;
   const FileList({super.key});
 
+  const FileList({
+    Key? key,
+    required this.category,
+    required this.showPrivate,
+  }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
