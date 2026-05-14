@@ -68,6 +68,9 @@ class FileProvider extends ChangeNotifier {
       await loadFiles(category);
     } catch (e) {
       _error = e.toString();
+    }finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }
