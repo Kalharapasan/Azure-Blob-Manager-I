@@ -29,6 +29,10 @@ class FileList extends StatelessWidget {
       displayedFiles = displayedFiles.where((file) => file.category == category).toList();
     }
 
+    if (!showPrivate) {
+      displayedFiles = displayedFiles.where((file) => !file.isPrivate).toList();
+    }
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
