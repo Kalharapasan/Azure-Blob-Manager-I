@@ -16,4 +16,8 @@ class AzureBlobService {
     _baseUrl = 'https://$_accountName.blob.core.windows.net/$_containerName?$_sasToken';
   }
 
+  Future<String> uploadFile(File file, String fileName, String category, bool isPrivate) async {
+    
+  }
+
 }
