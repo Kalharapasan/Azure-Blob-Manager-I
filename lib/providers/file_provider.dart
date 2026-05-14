@@ -68,7 +68,7 @@ class FileProvider extends ChangeNotifier {
       await loadFiles(category);
     } catch (e) {
       _error = e.toString();
-    }finally {
+    } finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -87,7 +87,9 @@ class FileProvider extends ChangeNotifier {
       _storageStats = await _azureBlobService.getStorageStats();
     } catch (e) {
       _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
   }
 }
