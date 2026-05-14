@@ -6,7 +6,6 @@ import '../models/file_item.dart';
 class FileList extends StatelessWidget {
   final String category;
   final bool showPrivate;
-  const FileList({super.key});
 
   const FileList({Key? key, required this.category, required this.showPrivate})
     : super(key: key);
@@ -27,7 +26,14 @@ class FileList extends StatelessWidget {
 
 
 class FileItemWidget extends StatelessWidget {
-  const FileItemWidget({super.key});
+  final FileItem file;
+
+  const FileItemWidget({
+    Key? key,
+    required this.file,
+  }) : super(key: key);
+
+
 
   @override
   Widget build(BuildContext context) {
