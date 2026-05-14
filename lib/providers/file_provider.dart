@@ -43,6 +43,9 @@ class FileProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       throw e;
+    }finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
