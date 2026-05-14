@@ -17,7 +17,13 @@ class AzureBlobService {
   }
 
   Future<String> uploadFile(File file, String fileName, String category, bool isPrivate) async {
-    
+
+    try {
+      
+    } catch (e) {
+      
+    }
+
   }
 
 }
