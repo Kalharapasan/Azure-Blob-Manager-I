@@ -55,6 +55,12 @@ class AzureBlobService {
     try {
       final Uri url = Uri.parse('$_baseUrl/$blobPath');
       final http.Response response = await http.get(url);
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        throw Exception(
+            'Failed to download file: ${response.statusCode} - ${response.body}');
+      }
     } catch (e) {
       
     }
