@@ -129,7 +129,11 @@ class FileItemWidget extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File downloaded successfully')),
       );
-    } catch (e) {}
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to download file: $e')));
+    }
   }
 
   Future<void> _openFile(BuildContext context, FileItem file) async {}
