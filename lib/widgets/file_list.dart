@@ -90,7 +90,9 @@ class FileItemWidget extends StatelessWidget {
         );
       
     } catch (e) {
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete file: $e')),
+      );
     }
 
   }
