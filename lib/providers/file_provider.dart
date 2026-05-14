@@ -67,7 +67,7 @@ class FileProvider extends ChangeNotifier {
       await _azureBlobService.deleteFile(blobPath);
       await loadFiles(category);
     } catch (e) {
-      
+      _error = e.toString();
     }
   }
 }
