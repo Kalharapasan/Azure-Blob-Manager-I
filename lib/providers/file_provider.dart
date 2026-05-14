@@ -78,5 +78,7 @@ class FileProvider extends ChangeNotifier {
     return _azureBlobService.downloadFile(blobPath);
   }
 
-  
+  Future<void> loadStorageStats() async {}
+
+
 }
