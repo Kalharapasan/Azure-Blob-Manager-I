@@ -46,6 +46,8 @@ class AzureBlobService {
           'Failed to upload file: ${response.statusCode} - ${response.body}',
         );
       }
-    } catch (e) {}
+    } catch (e) {
+      throw Exception('Failed to upload file: $e');
+    }
   }
 }
