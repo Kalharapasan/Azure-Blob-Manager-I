@@ -50,4 +50,9 @@ class AzureBlobService {
       throw Exception('Failed to upload file: $e');
     }
   }
+
+  Future<List<int>> downloadFile(String blobPath) async {
+    
+  }
+
 }
