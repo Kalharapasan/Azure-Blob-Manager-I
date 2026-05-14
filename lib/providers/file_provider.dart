@@ -9,5 +9,12 @@ class FileProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic> _storageStats = {};
+
+  List<FileItem> get files => _files;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  Map<String, dynamic> get storageStats => _storageStats;
+
   
+
 }
