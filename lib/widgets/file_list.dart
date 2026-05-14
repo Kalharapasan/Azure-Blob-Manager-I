@@ -14,6 +14,10 @@ class FileList extends StatelessWidget {
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
 
+    if (fileProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
