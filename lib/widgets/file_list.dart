@@ -14,7 +14,7 @@ class FileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
-    
+
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
@@ -22,5 +22,15 @@ class FileList extends StatelessWidget {
         return FileItemWidget(file: file);
       },
     );
+  }
+}
+
+
+class FileItemWidget extends StatelessWidget {
+  const FileItemWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
