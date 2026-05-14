@@ -13,6 +13,8 @@ class FileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fileProvider = Provider.of<FileProvider>(context);
+    
     return ListView.builder(
       itemCount: displayedFiles.length,
       itemBuilder: (context, index) {
