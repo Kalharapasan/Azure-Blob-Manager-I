@@ -54,7 +54,7 @@ class AzureBlobService {
   Future<List<int>> downloadFile(String blobPath) async {
     try {
       final Uri url = Uri.parse('$_baseUrl/$blobPath');
-      
+      final http.Response response = await http.get(url);
     } catch (e) {
       
     }
