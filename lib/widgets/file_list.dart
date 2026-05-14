@@ -86,7 +86,6 @@ class FileItemWidget extends StatelessWidget {
   }
 
   Future<void> _deleteFile(BuildContext context, FileItem file) async {
-    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -104,7 +103,7 @@ class FileItemWidget extends StatelessWidget {
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       try {
         final fileProvider = Provider.of<FileProvider>(context, listen: false);
@@ -123,7 +122,15 @@ class FileItemWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _downloadFile(BuildContext context, FileItem file) async {}
+  Future<void> _downloadFile(BuildContext context, FileItem file) async {
+    try {
+      final fileProvider = Provider.of<FileProvider>(context, listen: false);
+      await fileProvider.downloadFile('${file.category}/${file.name}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File downloaded successfully')),
+      );
+    } catch (e) {}
+  }
 
   Future<void> _openFile(BuildContext context, FileItem file) async {}
 
