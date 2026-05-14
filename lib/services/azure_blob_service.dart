@@ -13,11 +13,16 @@ class AzureBlobService {
     _accountName = AppConfig.azureStorageAccount;
     _sasToken = AppConfig.azureSaSToken;
     _containerName = AppConfig.azureStorageContainer;
-    _baseUrl = 'https://$_accountName.blob.core.windows.net/$_containerName?$_sasToken';
+    _baseUrl =
+        'https://$_accountName.blob.core.windows.net/$_containerName?$_sasToken';
   }
 
-  Future<String> uploadFile(File file, String fileName, String category, bool isPrivate) async {
-
+  Future<String> uploadFile(
+    File file,
+    String fileName,
+    String category,
+    bool isPrivate,
+  ) async {
     try {
       final String blobPath = isPrivate
           ? 'private/$category/$fileName'
@@ -33,10 +38,14 @@ class AzureBlobService {
         },
         body: fileBytes,
       );
-    } catch (e) {
-      
-    }
-
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Return the blob URL
+        return 'https://$_accountName.blob.core.windows.net/$_containerName/$blobPath';
+      } else {
+        throw Exception(
+          'Failed to upload file: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {}
   }
-
 }
