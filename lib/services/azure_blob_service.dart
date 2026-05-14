@@ -52,7 +52,11 @@ class AzureBlobService {
   }
 
   Future<List<int>> downloadFile(String blobPath) async {
-    
+    try {
+      
+    } catch (e) {
+      
+    }
   }
 
 }
