@@ -226,7 +226,10 @@ class AzureBlobService {
         };
       }
     } catch (e) {
-      
+      return {
+        'contentLength': 0,
+        'lastModified': DateTime.now(),
+      };
     }
   }
 
