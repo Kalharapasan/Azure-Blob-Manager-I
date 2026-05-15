@@ -248,6 +248,9 @@ class AzureBlobService {
 
   String _getContentType(String fileName) {
     final String extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      
+    }
   }
 
 }
