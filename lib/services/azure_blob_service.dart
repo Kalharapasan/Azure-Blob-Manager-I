@@ -90,8 +90,10 @@ class AzureBlobService {
 
     try{
 
+      final List<FileItem> files = [];
+
     }catch (e) {
-      
+
     }
 
   }
