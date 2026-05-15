@@ -175,6 +175,8 @@ class AzureBlobService {
               }
             }
 
+            if (!categoryCounts.containsKey(category)) {}
+
             
           }
         }
