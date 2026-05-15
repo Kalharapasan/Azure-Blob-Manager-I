@@ -13,6 +13,8 @@ class CategorySidebar extends StatelessWidget {
   }
 
   IconData _getIconForCategory(String category) {
-    
+    switch (category) {
+      
+    }
   }
 }
