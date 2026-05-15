@@ -103,7 +103,7 @@ class AzureBlobService {
             responseBody.split('<Name>').skip(1).toList();
         
         for (final String line in blobLines) {
-          
+          final int endIndex = line.indexOf('</Name>');
         }
 
       }else{
