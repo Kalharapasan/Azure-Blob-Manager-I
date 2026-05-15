@@ -180,6 +180,8 @@ class AzureBlobService {
               categorySizes[category] = 0;
             }
 
+            final Map<String, dynamic> properties = await _getBlobProperties(blobName);
+            final int contentLength = properties['contentLength'] ?? 0;
 
           }
         }
