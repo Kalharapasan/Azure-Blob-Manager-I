@@ -10,7 +10,13 @@ class StorageChart extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final fileProvider = Provider.of<FileProvider>(context);
+
+    if (fileProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     
+
     return const Placeholder();
   }
 }
