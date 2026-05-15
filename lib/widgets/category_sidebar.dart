@@ -15,6 +15,15 @@ class CategorySidebar extends StatelessWidget {
     return const Placeholder();
   }
 
+  static const List<String> categories = [
+    'all',
+    'video',
+    'image',
+    'music',
+    'document',
+    'other',
+  ];
+
   IconData _getIconForCategory(String category) {
     switch (category) {
       case 'all':
