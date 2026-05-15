@@ -94,7 +94,12 @@ class AzureBlobService {
       final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
 
       final http.Response response = await http.get(url);
-      
+
+      if (response.statusCode == 200) {
+          
+      }else{
+
+      }
 
     }catch (e) {
 
