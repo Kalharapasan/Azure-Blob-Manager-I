@@ -171,9 +171,11 @@ class AzureBlobService {
               if (pathParts[0] == 'private' && pathParts.length >= 3) {
                 category = pathParts[1];
               } else {
-                
+                category = pathParts[0];
               }
             }
+
+            
           }
         }
       } else {}
