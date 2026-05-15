@@ -204,6 +204,8 @@ class AzureBlobService {
         'categoryCounts': categoryCounts,
         'categorySizes': categorySizes,
       };
-    } catch (e) {}
+    } catch (e) {
+      throw Exception('Failed to get storage stats: $e');
+    }
   }
 }
