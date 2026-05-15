@@ -18,18 +18,18 @@ class StorageChart extends StatelessWidget {
     }
 
     if (fileProvider.error != null) {
-      return Center(
-        child: Text('Error: ${fileProvider.error}'),
-      );
+      return Center(child: Text('Error: ${fileProvider.error}'));
     }
 
     if (categorySizes.isEmpty) {
-      return const Center(
-        child: Text('No storage data available'),
-      );
+      return const Center(child: Text('No storage data available'));
     }
 
-    
+    final List<PieChartSectionData> sections = [];
+    int totalSize = 0;
+    categorySizes.forEach((category, size) {
+      totalSize += size;
+    });
 
     return const Placeholder();
   }
