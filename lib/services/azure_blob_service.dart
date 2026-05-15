@@ -59,7 +59,8 @@ class AzureBlobService {
         return response.bodyBytes;
       } else {
         throw Exception(
-            'Failed to download file: ${response.statusCode} - ${response.body}');
+          'Failed to download file: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to download file: $e');
@@ -79,7 +80,8 @@ class AzureBlobService {
         return;
       } else {
         throw Exception(
-            'Failed to delete file: ${response.statusCode} - ${response.body}');
+          'Failed to delete file: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to delete file: $e');
@@ -87,21 +89,20 @@ class AzureBlobService {
   }
 
   Future<List<FileItem>> listFiles(String category) async {
-
-    try{
-
+    try {
       final List<FileItem> files = [];
       final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
 
       final http.Response response = await http.get(url);
 
       if (response.statusCode == 200) {
-
         final String responseBody = response.body;
 
-        final List<String> blobLines =
-            responseBody.split('<Name>').skip(1).toList();
-        
+        final List<String> blobLines = responseBody
+            .split('<Name>')
+            .skip(1)
+            .toList();
+
         for (final String line in blobLines) {
           final int endIndex = line.indexOf('</Name>');
           if (endIndex > 0) {
@@ -109,10 +110,12 @@ class AzureBlobService {
             final String searchPrefix = isPrivateCategory(category)
                 ? 'private/$category/'
                 : '$category/';
-            
+
             if (blobName.startsWith(searchPrefix)) {
               final String fileName = blobName.substring(searchPrefix.length);
-              final Map<String, dynamic> properties = await _getBlobProperties(blobName);
+              final Map<String, dynamic> properties = await _getBlobProperties(
+                blobName,
+              );
               final FileItem fileItem = FileItem(
                 name: fileName,
                 url:
@@ -126,19 +129,15 @@ class AzureBlobService {
             }
           }
         }
-
-      }else{
-        throw Exception('Failed to list files: ${response.statusCode} - ${response.body}');
+      } else {
+        throw Exception(
+          'Failed to list files: ${response.statusCode} - ${response.body}',
+        );
       }
 
       return files;
-
-    }catch (e) {
-
+    } catch (e) {
+      throw Exception('Failed to list files: $e');
     }
-
   }
-
-
-
 }
