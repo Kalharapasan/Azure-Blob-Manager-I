@@ -167,7 +167,11 @@ class AzureBlobService {
             String category = 'other';
 
             if (pathParts.length >= 2) {
-              
+              if (pathParts[0] == 'private' && pathParts.length >= 3) {
+
+              }else{
+                
+              }
             }
           }
         }
