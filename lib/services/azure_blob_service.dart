@@ -91,6 +91,10 @@ class AzureBlobService {
     try{
 
       final List<FileItem> files = [];
+      final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
+
+      final http.Response response = await http.get(url);
+      
 
     }catch (e) {
 
