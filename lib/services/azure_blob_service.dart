@@ -122,8 +122,7 @@ class AzureBlobService {
                 uploadedAt: properties['lastModified'] ?? DateTime.now(),
                 isPrivate: blobName.startsWith('private/'),
               );
-
-              
+              files.add(fileItem);
             }
 
           }
