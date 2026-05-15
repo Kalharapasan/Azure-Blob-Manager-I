@@ -8,6 +8,8 @@ class StorageChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stats = fileProvider.storageStats;
+    final categorySizes = stats['categorySizes'] as Map<String, int>? ?? {};
 
     final fileProvider = Provider.of<FileProvider>(context);
 
@@ -21,8 +23,13 @@ class StorageChart extends StatelessWidget {
       );
     }
 
-    final stats = fileProvider.storageStats;
-    final categorySizes = stats['categorySizes'] as Map<String, int>? ?? {};
+    if (categorySizes.isEmpty) {
+      return const Center(
+        child: Text('No storage data available'),
+      );
+    }
+
+    
 
     return const Placeholder();
   }
