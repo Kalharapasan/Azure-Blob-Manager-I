@@ -99,6 +99,9 @@ class AzureBlobService {
 
         final String responseBody = response.body;
 
+        final List<String> blobLines =
+            responseBody.split('<Name>').skip(1).toList();
+
       }else{
 
       }
