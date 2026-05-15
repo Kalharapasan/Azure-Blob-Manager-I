@@ -113,6 +113,10 @@ class AzureBlobService {
             if (blobName.startsWith(searchPrefix)) {
               final String fileName = blobName.substring(searchPrefix.length);
               final Map<String, dynamic> properties = await _getBlobProperties(blobName);
+              final FileItem fileItem = FileItem(
+                
+              );
+
               
             }
 
