@@ -213,6 +213,11 @@ class AzureBlobService {
     try {
       final Uri url = Uri.parse('$_baseUrl/$blobName&comp=properties');
       final http.Response response = await http.head(url);
+      if (response.statusCode == 200) {
+
+      }else{
+        
+      }
     } catch (e) {
       
     }
