@@ -66,4 +66,8 @@ class AzureBlobService {
     }
   }
 
+  Future<void> deleteFile(String blobPath) async {
+    
+  }
+
 }
