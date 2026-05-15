@@ -114,7 +114,13 @@ class AzureBlobService {
               final String fileName = blobName.substring(searchPrefix.length);
               final Map<String, dynamic> properties = await _getBlobProperties(blobName);
               final FileItem fileItem = FileItem(
-                
+                name: fileName,
+                url:
+                    'https://$_accountName.blob.core.windows.net/$_containerName/$blobName',
+                size: properties['contentLength'] ?? 0,
+                category: category,
+                uploadedAt: properties['lastModified'] ?? DateTime.now(),
+                isPrivate: blobName.startsWith('private/'),
               );
 
               
