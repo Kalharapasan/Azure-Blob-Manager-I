@@ -21,6 +21,9 @@ class StorageChart extends StatelessWidget {
       );
     }
 
+    final stats = fileProvider.storageStats;
+    final categorySizes = stats['categorySizes'] as Map<String, int>? ?? {};
+
     return const Placeholder();
   }
 }
