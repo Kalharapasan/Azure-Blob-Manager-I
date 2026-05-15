@@ -215,21 +215,15 @@ class AzureBlobService {
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
         return {
-          'contentLength': int.tryParse(response.headers['content-length'] ?? '0')
-              ?? 0,
+          'contentLength':
+              int.tryParse(response.headers['content-length'] ?? '0') ?? 0,
           'lastModified': _parseDate(response.headers['last-modified']),
         };
-      }else{
-        return {
-          'contentLength': 0,
-          'lastModified': DateTime.now(),
-        };
+      } else {
+        return {'contentLength': 0, 'lastModified': DateTime.now()};
       }
     } catch (e) {
-      return {
-        'contentLength': 0,
-        'lastModified': DateTime.now(),
-      };
+      return {'contentLength': 0, 'lastModified': DateTime.now()};
     }
   }
 
@@ -256,8 +250,28 @@ class AzureBlobService {
         return 'image/png';
       case 'gif':
         return 'image/gif';
-      
+      case 'mp4':
+        return 'video/mp4';
+      case 'avi':
+        return 'video/x-msvideo';
+      case 'mov':
+        return 'video/quicktime';
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'wav':
+        return 'audio/wav';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'txt':
+        return 'text/plain';
+      case 'zip':
+        return 'application/zip';
+      default:
+        return 'application/octet-stream';
     }
   }
-
 }
