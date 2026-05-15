@@ -4,7 +4,11 @@ class CategorySidebar extends StatelessWidget {
   final String selectedCategory;
   final ValueChanged<String> onCategorySelected;
 
-  const CategorySidebar({super.key});
+  const CategorySidebar({
+    Key? key,
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
