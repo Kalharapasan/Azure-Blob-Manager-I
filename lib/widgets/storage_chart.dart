@@ -44,7 +44,34 @@ class StorageChart extends StatelessWidget {
     });
 
     return Card(
-      
+      margin: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Storage Usage by Category',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: PieChart(
+              PieChartData(
+                sections: sections,
+                centerSpaceRadius: 40,
+                sectionsSpace: 2,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Total Size: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     );
 
     Color _getColorForCategory(String category) {
