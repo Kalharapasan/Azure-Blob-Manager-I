@@ -242,4 +242,8 @@ class AzureBlobService {
     }
   }
 
+  bool isPrivateCategory(String category) {
+    return false;
+  }
+
 }
