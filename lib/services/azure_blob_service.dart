@@ -110,7 +110,10 @@ class AzureBlobService {
                 ? 'private/$category/'
                 : '$category/';
             
-            if (blobName.startsWith(searchPrefix)) {}
+            if (blobName.startsWith(searchPrefix)) {
+              final String fileName = blobName.substring(searchPrefix.length);
+              
+            }
 
           }
         }
