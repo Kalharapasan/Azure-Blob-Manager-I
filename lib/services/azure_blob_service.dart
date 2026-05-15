@@ -144,6 +144,10 @@ class AzureBlobService {
   Future<Map<String, dynamic>> getStorageStats() async {
 
     try {
+      Map<String, int> categoryCounts = {};
+      Map<String, int> categorySizes = {};
+      int totalFiles = 0;
+      int totalSize = 0;
       
     } catch (e) {
       
