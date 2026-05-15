@@ -212,6 +212,7 @@ class AzureBlobService {
   Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
     try {
       final Uri url = Uri.parse('$_baseUrl/$blobName&comp=properties');
+      final http.Response response = await http.head(url);
     } catch (e) {
       
     }
