@@ -106,6 +106,11 @@ class AzureBlobService {
           final int endIndex = line.indexOf('</Name>');
           if (endIndex > 0) {
             final String blobName = line.substring(0, endIndex);
+            final String searchPrefix = isPrivateCategory(category)
+                ? 'private/$category/'
+                : '$category/';
+            
+            
           }
         }
 
