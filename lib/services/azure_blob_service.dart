@@ -161,7 +161,9 @@ class AzureBlobService {
         for (final String line in blobLines) {
           final int endIndex = line.indexOf('</Name>');
 
-          
+          if (endIndex > 0) {
+            final String blobName = line.substring(0, endIndex);
+          }
         }
 
       }else{
