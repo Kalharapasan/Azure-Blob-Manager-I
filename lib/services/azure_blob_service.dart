@@ -67,7 +67,25 @@ class AzureBlobService {
   }
 
   Future<void> deleteFile(String blobPath) async {
-    
+    try {
+      final Uri url = Uri.parse('$_baseUrl/$blobPath');
+
+      final http.Response response = await http.delete(url);
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 202 ||
+          response.statusCode == 404) {
+        // Success (200, 202) or already deleted (404)
+        return;
+      } else {
+        throw Exception(
+            'Failed to delete file: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to delete file: $e');
+    }
   }
+
+  
 
 }
