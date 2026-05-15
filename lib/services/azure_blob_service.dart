@@ -96,7 +96,9 @@ class AzureBlobService {
       final http.Response response = await http.get(url);
 
       if (response.statusCode == 200) {
-          
+
+        final String responseBody = response.body;
+
       }else{
 
       }
