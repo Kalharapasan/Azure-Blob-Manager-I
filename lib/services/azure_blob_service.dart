@@ -197,6 +197,13 @@ class AzureBlobService {
           'Failed to get storage stats: ${response.statusCode} - ${response.body}',
         );
       }
+
+      return {
+        'totalFiles': totalFiles,
+        'totalSize': totalSize,
+        'categoryCounts': categoryCounts,
+        'categorySizes': categorySizes,
+      };
     } catch (e) {}
   }
 }
