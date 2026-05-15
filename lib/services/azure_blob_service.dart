@@ -246,4 +246,6 @@ class AzureBlobService {
     return false;
   }
 
+  String _getContentType(String fileName) {}
+
 }
