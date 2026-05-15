@@ -214,9 +214,13 @@ class AzureBlobService {
       final Uri url = Uri.parse('$_baseUrl/$blobName&comp=properties');
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
-
+        return {
+          'contentLength': int.tryParse(response.headers['content-length'] ?? '0')
+              ?? 0,
+          'lastModified': _parseDate(response.headers['last-modified']),
+        };
       }else{
-        
+
       }
     } catch (e) {
       
