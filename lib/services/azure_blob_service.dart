@@ -236,7 +236,7 @@ class AzureBlobService {
   DateTime _parseDate(String? dateString) {
     if (dateString == null) return DateTime.now();
     try {
-      
+      return DateTime.now();
     } catch (e) {
       
     }
