@@ -31,6 +31,18 @@ class StorageChart extends StatelessWidget {
       totalSize += size;
     });
 
+    categorySizes.forEach((category, size) {
+      final double percentage = (size / totalSize) * 100;
+      sections.add(
+        PieChartSectionData(
+          value: size.toDouble(),
+          title: '${percentage.toStringAsFixed(1)}%',
+          radius: 50,
+          color: _getColorForCategory(category),
+        ),
+      );
+    });
+
     return const Placeholder();
   }
 }
