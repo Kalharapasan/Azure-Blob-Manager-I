@@ -140,4 +140,8 @@ class AzureBlobService {
       throw Exception('Failed to list files: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getStorageStats() async {
+    
+  }
 }
