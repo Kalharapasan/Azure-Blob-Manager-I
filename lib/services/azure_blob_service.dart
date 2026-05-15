@@ -131,7 +131,7 @@ class AzureBlobService {
         throw Exception('Failed to list files: ${response.statusCode} - ${response.body}');
       }
 
-      
+      return files;
 
     }catch (e) {
 
