@@ -19,13 +19,35 @@ class CategorySidebar extends StatelessWidget {
     'other',
   ];
 
-
   @override
   Widget build(BuildContext context) {
-    return  Container();
+    return Container(
+      width: 200,
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: ListView.builder(
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final bool isSelected = selectedCategory == category;
+          return ListTile(
+            leading: Icon(_getIconForCategory(category)),
+            title: Text(
+              category[0].toUpperCase() + category.substring(1),
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            selected: isSelected,
+            onTap: () => onCategorySelected(category),
+          );
+        },
+      ),
+    );
   }
 
-  
   IconData _getIconForCategory(String category) {
     switch (category) {
       case 'all':
