@@ -209,6 +209,12 @@ class AzureBlobService {
     }
   }
 
-  Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {}
+  Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
+    try {
+      
+    } catch (e) {
+      
+    }
+  }
 
 }
