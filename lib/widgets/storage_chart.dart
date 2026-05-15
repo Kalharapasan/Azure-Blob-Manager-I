@@ -8,9 +8,6 @@ class StorageChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stats = fileProvider.storageStats;
-    final categorySizes = stats['categorySizes'] as Map<String, int>? ?? {};
-
     final fileProvider = Provider.of<FileProvider>(context);
 
     if (fileProvider.isLoading) {
@@ -21,10 +18,14 @@ class StorageChart extends StatelessWidget {
       return Center(child: Text('Error: ${fileProvider.error}'));
     }
 
+    final stats = fileProvider.storageStats;
+    final categorySizes = stats['categorySizes'] as Map<String, int>? ?? {};
+
     if (categorySizes.isEmpty) {
       return const Center(child: Text('No storage data available'));
     }
 
+    // Prepare data for the pie chart
     final List<PieChartSectionData> sections = [];
     int totalSize = 0;
     categorySizes.forEach((category, size) {
@@ -73,20 +74,20 @@ class StorageChart extends StatelessWidget {
         ],
       ),
     );
+  }
 
-    Color _getColorForCategory(String category) {
-      switch (category) {
-        case 'video':
-          return Colors.red;
-        case 'image':
-          return Colors.blue;
-        case 'music':
-          return Colors.green;
-        case 'document':
-          return Colors.orange;
-        default:
-          return Colors.grey;
-      }
+  Color _getColorForCategory(String category) {
+    switch (category) {
+      case 'video':
+        return Colors.red;
+      case 'image':
+        return Colors.blue;
+      case 'music':
+        return Colors.green;
+      case 'document':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 }
