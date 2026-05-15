@@ -234,7 +234,11 @@ class AzureBlobService {
   }
 
   DateTime _parseDate(String? dateString) {
-    
+    try {
+      
+    } catch (e) {
+      
+    }
   }
 
 }
