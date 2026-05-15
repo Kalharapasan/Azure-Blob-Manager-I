@@ -148,6 +148,10 @@ class AzureBlobService {
       Map<String, int> categorySizes = {};
       int totalFiles = 0;
       int totalSize = 0;
+
+      final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
+
+      final http.Response response = await http.get(url);
       
     } catch (e) {
       
