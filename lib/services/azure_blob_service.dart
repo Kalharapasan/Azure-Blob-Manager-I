@@ -124,13 +124,14 @@ class AzureBlobService {
               );
               files.add(fileItem);
             }
-
           }
         }
 
       }else{
-
+        throw Exception('Failed to list files: ${response.statusCode} - ${response.body}');
       }
+
+      
 
     }catch (e) {
 
