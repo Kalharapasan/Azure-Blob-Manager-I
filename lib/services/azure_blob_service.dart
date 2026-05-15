@@ -110,7 +110,8 @@ class AzureBlobService {
                 ? 'private/$category/'
                 : '$category/';
             
-            
+            if (blobName.startsWith(searchPrefix)) {}
+
           }
         }
 
