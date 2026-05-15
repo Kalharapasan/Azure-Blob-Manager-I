@@ -238,7 +238,7 @@ class AzureBlobService {
     try {
       return DateTime.now();
     } catch (e) {
-      
+      return DateTime.now();
     }
   }
 
