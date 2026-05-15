@@ -163,6 +163,8 @@ class AzureBlobService {
 
           if (endIndex > 0) {
             final String blobName = line.substring(0, endIndex);
+            final List<String> pathParts = blobName.split('/');
+            String category = 'other';
           }
         }
 
