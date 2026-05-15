@@ -252,7 +252,8 @@ class AzureBlobService {
       case 'jpg':
       case 'jpeg':
         return 'image/jpeg';
-      
+      case 'png':
+        return 'image/png';
       
     }
   }
