@@ -44,5 +44,9 @@ class StorageChart extends StatelessWidget {
     });
 
     return const Placeholder();
+
+    Color _getColorForCategory(String category) {
+      
+    }
   }
 }
