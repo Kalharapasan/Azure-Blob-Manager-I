@@ -46,7 +46,18 @@ class StorageChart extends StatelessWidget {
     return const Placeholder();
 
     Color _getColorForCategory(String category) {
-      switch (category) {}
+      switch (category) {
+        case 'video':
+          return Colors.red;
+        case 'image':
+          return Colors.blue;
+        case 'music':
+          return Colors.green;
+        case 'document':
+          return Colors.orange;
+        default:
+          return Colors.grey;
+      }
     }
   }
 }
