@@ -10,11 +10,6 @@ class CategorySidebar extends StatelessWidget {
     required this.onCategorySelected,
   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-
   static const List<String> categories = [
     'all',
     'video',
@@ -24,6 +19,13 @@ class CategorySidebar extends StatelessWidget {
     'other',
   ];
 
+
+  @override
+  Widget build(BuildContext context) {
+    return  Container();
+  }
+
+  
   IconData _getIconForCategory(String category) {
     switch (category) {
       case 'all':
