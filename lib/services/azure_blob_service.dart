@@ -220,7 +220,10 @@ class AzureBlobService {
           'lastModified': _parseDate(response.headers['last-modified']),
         };
       }else{
-
+        return {
+          'contentLength': 0,
+          'lastModified': DateTime.now(),
+        };
       }
     } catch (e) {
       
