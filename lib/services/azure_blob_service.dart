@@ -208,4 +208,7 @@ class AzureBlobService {
       throw Exception('Failed to get storage stats: $e');
     }
   }
+
+  Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {}
+
 }
