@@ -142,7 +142,6 @@ class AzureBlobService {
   }
 
   Future<Map<String, dynamic>> getStorageStats() async {
-
     try {
       Map<String, int> categoryCounts = {};
       Map<String, int> categorySizes = {};
@@ -154,9 +153,11 @@ class AzureBlobService {
       final http.Response response = await http.get(url);
 
       if (response.statusCode == 200) {
-
         final String responseBody = response.body;
-        final List<String> blobLines = responseBody.split('<Name>').skip(1).toList();
+        final List<String> blobLines = responseBody
+            .split('<Name>')
+            .skip(1)
+            .toList();
 
         for (final String line in blobLines) {
           final int endIndex = line.indexOf('</Name>');
@@ -168,21 +169,14 @@ class AzureBlobService {
 
             if (pathParts.length >= 2) {
               if (pathParts[0] == 'private' && pathParts.length >= 3) {
-
-              }else{
+                category = pathParts[1];
+              } else {
                 
               }
             }
           }
         }
-
-      }else{
-
-      }
-      
-    } catch (e) {
-      
-    }
-
+      } else {}
+    } catch (e) {}
   }
 }
