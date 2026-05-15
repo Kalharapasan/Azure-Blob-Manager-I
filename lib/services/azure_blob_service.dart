@@ -183,6 +183,11 @@ class AzureBlobService {
             final Map<String, dynamic> properties = await _getBlobProperties(blobName);
             final int contentLength = properties['contentLength'] ?? 0;
 
+            categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+            categorySizes[category] = (categorySizes[category] ?? 0) + contentLength;
+            totalFiles++;
+            totalSize += contentLength;
+
           }
         }
       } else {}
