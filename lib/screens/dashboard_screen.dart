@@ -5,6 +5,7 @@ import '../widgets/category_sidebar.dart';
 import '../widgets/file_list.dart';
 import '../widgets/file_upload_dialog.dart';
 import '../widgets/storage_chart.dart';
+import 'dart:math';
 import '../config/app_config.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -64,9 +65,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: Column(
               children: [
-                // Storage Dashboard (bounded height to avoid overflow)
+                // Storage Dashboard (give more vertical room so chart + summary fit)
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.34,
+                  height: max(360, MediaQuery.of(context).size.height * 0.36),
                   child: StorageChart(),
                 ),
                 // File List

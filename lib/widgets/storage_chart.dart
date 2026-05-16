@@ -56,20 +56,14 @@ class StorageChart extends StatelessWidget {
       );
     });
 
+    // Use a fixed-ish chart height so layout is stable across viewports.
+    final double chartHeight = min(220, MediaQuery.of(context).size.height * 0.28);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double availableHeight = constraints.maxHeight.isFinite
-              ? constraints.maxHeight
-              : MediaQuery.of(context).size.height * 0.25;
-          final double chartHeight = min(availableHeight * 0.6, 300);
-
-          return SizedBox(
-            height: availableHeight,
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
@@ -77,22 +71,23 @@ class StorageChart extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              SizedBox(
-                height: chartHeight,
-                child: PieChart(
-                  PieChartData(
-                    sections: sections,
-                    centerSpaceRadius: 40,
-                    sectionsSpace: 2,
-                  ),
+          SizedBox(
+            height: chartHeight,
+            child: Center(
+              child: PieChart(
+                PieChartData(
+                  sections: sections,
+                  centerSpaceRadius: 40,
+                  sectionsSpace: 2,
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                       const Text(
                         'Data Analytics & Summary',
                         textAlign: TextAlign.center,
@@ -119,10 +114,7 @@ class StorageChart extends StatelessWidget {
                 ),
               ),
             ],
-            ),
-          );
-        },
-      ),
+          ),
     );
   }
 
