@@ -3,6 +3,15 @@
 A lightweight Flutter app to browse, upload, and manage files stored in Azure Blob Storage.
 
 ## Screenshots
+<img width="1366" height="632" alt="Capture3" src="https://github.com/user-attachments/assets/803ccf06-9e37-4a7b-a492-7d8a7287b838" />
+<img width="1366" height="625" alt="Capture2" src="https://github.com/user-attachments/assets/f8865f64-eaad-41d1-890a-4107db77cf7e" />
+<img width="1366" height="629" alt="Capture" src="https://github.com/user-attachments/assets/089c2e04-bf31-49f7-b8ae-0e6be77ebb19" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 07 PM222" src="https://github.com/user-attachments/assets/bfcb394f-8baf-4e1d-ab72-25d0ea761d81" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 05 PM" src="https://github.com/user-attachments/assets/70407243-2ed5-4b25-a14a-c2d44ba2a622" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 05 PM2" src="https://github.com/user-attachments/assets/c55134ab-d475-469a-81f8-ad745edb28b4" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 06 PM" src="https://github.com/user-attachments/assets/e1c20dea-a87e-42ed-8165-f156220b69b0" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 06 PM22" src="https://github.com/user-attachments/assets/13e66b58-fd34-4cb4-aac4-39951fb340eb" />
+<img width="720" height="1600" alt="WhatsApp Image 2026-05-16 at 9 53 06 PM222" src="https://github.com/user-attachments/assets/496676bc-286d-4db5-9e5e-0e79c3a0fa9a" />
 
 
 **Features**
