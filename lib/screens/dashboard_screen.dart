@@ -60,7 +60,8 @@ class _DashboardScreenState extends State<DashboardScreen>
         _searchQuery = '';
         _searchController.clear();
       });
-      Provider.of<FileProvider>(context, listen: false).loadFiles(category);
+      // Always load all files; FileList filters client-side by category
+      Provider.of<FileProvider>(context, listen: false).loadFiles('all');
     }
   }
 
@@ -72,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         controller: _passwordController,
         onUnlock: () {
           setState(() => _selectedCategory = 'private');
-          Provider.of<FileProvider>(context, listen: false).loadFiles('private');
+          Provider.of<FileProvider>(context, listen: false).loadFiles('all');
         },
       ),
     );

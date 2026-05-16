@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../models/file_item.dart';
 import '../config/app_config.dart';
@@ -58,6 +59,35 @@ class AzureBlobService {
     );
   }
 
+  Future<String> _putBlob(Uri url, List<int> fileBytes, String fileName) async {
+    // Use http.Client with explicit Content-Length; Azure Blob rejects
+    // chunked-transfer-encoded PUT requests (which http.put() sends when the
+    // body length is unknown at the header-writing stage).
+    final client = http.Client();
+    try {
+      final request = http.Request('PUT', url);
+      request.headers['x-ms-blob-type'] = 'BlockBlob';
+      request.headers['Content-Type'] = _getContentType(fileName);
+      request.headers['Content-Length'] = fileBytes.length.toString();
+      request.bodyBytes = fileBytes is List<int>
+          ? Uint8List.fromList(fileBytes)
+          : fileBytes as Uint8List;
+
+      final streamedResponse = await client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return response.statusCode.toString();
+      } else {
+        throw Exception(
+          'Azure rejected upload: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } finally {
+      client.close();
+    }
+  }
+
   Future<String> uploadFile(
     File file,
     String fileName,
@@ -71,22 +101,8 @@ class AzureBlobService {
 
       final Uri url = _buildUrl(blobPath: blobPath);
       final List<int> fileBytes = await file.readAsBytes();
-      final http.Response response = await http.put(
-        url,
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': _getContentType(fileName),
-        },
-        body: fileBytes,
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        // Return the blob URL
-        return _buildUrl(blobPath: blobPath).toString();
-      } else {
-        throw Exception(
-          'Failed to upload file: ${response.statusCode} - ${response.body}',
-        );
-      }
+      await _putBlob(url, fileBytes, fileName);
+      return _buildUrl(blobPath: blobPath).toString();
     } catch (e) {
       throw Exception('Failed to upload file: $e');
     }
@@ -104,22 +120,8 @@ class AzureBlobService {
           : '$category/$fileName';
 
       final Uri url = _buildUrl(blobPath: blobPath);
-      final http.Response response = await http.put(
-        url,
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': _getContentType(fileName),
-        },
-        body: fileBytes,
-      );
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        // Return the blob URL
-        return _buildUrl(blobPath: blobPath).toString();
-      } else {
-        throw Exception(
-          'Failed to upload file: ${response.statusCode} - ${response.body}',
-        );
-      }
+      await _putBlob(url, fileBytes, fileName);
+      return _buildUrl(blobPath: blobPath).toString();
     } catch (e) {
       throw Exception('Failed to upload file: $e');
     }
@@ -355,7 +357,8 @@ class AzureBlobService {
 
   Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
     try {
-      final Uri url = _buildUrl(blobPath: blobName, extraQuery: {'comp': 'properties'});
+      // Azure Blob: HEAD <blob-url>?<sas> — no comp=properties needed
+      final Uri url = _buildUrl(blobPath: blobName);
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
         return {

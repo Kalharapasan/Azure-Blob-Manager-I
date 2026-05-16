@@ -8,6 +8,7 @@ import '../providers/file_provider.dart';
 import '../models/file_item.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
 
 class FileList extends StatelessWidget {
   final String category;
@@ -444,7 +445,6 @@ class _FileActions extends StatelessWidget {
       if (kIsWeb) {
         try {
           final Uri url = Uri.parse(file.url);
-          // On Web, we directly try to launch the URL as canLaunchUrl can be unreliable
           await launchUrl(url, mode: LaunchMode.externalApplication);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -475,16 +475,17 @@ class _FileActions extends StatelessWidget {
                 Text('Downloading ${file.name}...'),
               ],
             ),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 30),
           ),
         );
       }
 
       final bytes = await Provider.of<FileProvider>(context, listen: false)
           .downloadFile(file.blobName);
-      
+
       String? outputPath;
-      final bool isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+      final bool isDesktop = !kIsWeb &&
+          (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
       if (isDesktop) {
         try {
@@ -493,38 +494,60 @@ class _FileActions extends StatelessWidget {
             fileName: file.name,
           );
         } catch (e) {
-          debugPrint('saveFile failed: $e');
+          debugPrint('saveFile dialog failed: $e');
         }
       }
 
-      // Fallback for mobile or if saveFile was cancelled/failed
+      // Mobile fallback: save to a writable directory
       if (outputPath == null && !kIsWeb) {
         try {
-          // On mobile, we might want to just save to downloads or documents
-          final Directory? dir = Platform.isAndroid 
-              ? Directory('/storage/emulated/0/Download')
-              : await getApplicationDocumentsDirectory();
-          
-          if (dir != null && await dir.exists()) {
-             outputPath = '${dir.path}/${file.name}';
+          Directory? dir;
+          if (Platform.isAndroid) {
+            // Try external Downloads directory first
+            final ext = Directory('/storage/emulated/0/Download');
+            dir = await ext.exists() ? ext : await getApplicationDocumentsDirectory();
           } else {
-             final fallbackDir = await getApplicationDocumentsDirectory();
-             outputPath = '${fallbackDir.path}/${file.name}';
+            // iOS: save to app documents
+            dir = await getApplicationDocumentsDirectory();
           }
+          outputPath = '${dir.path}/${file.name}';
         } catch (e) {
           debugPrint('Path detection failed: $e');
+          final fallbackDir = await getApplicationDocumentsDirectory();
+          outputPath = '${fallbackDir.path}/${file.name}';
         }
       }
 
       if (outputPath != null) {
         final outputFile = File(outputPath);
         await outputFile.writeAsBytes(bytes);
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Saved to: ${outputPath.split(RegExp(r'[/\\]')).last}'),
+              content: Text('Saved: ${outputPath.split(RegExp(r'[/\\]')).last}'),
               backgroundColor: const Color(0xFF4ECDC4),
+              action: SnackBarAction(
+                label: 'Open',
+                textColor: Colors.white,
+                onPressed: () async {
+                  final result = await OpenFile.open(outputPath!);
+                  if (result.type != ResultType.done) {
+                    debugPrint('OpenFile error: ${result.message}');
+                  }
+                },
+              ),
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Download cancelled'),
+              backgroundColor: Color(0xFFFF9A3C),
             ),
           );
         }
