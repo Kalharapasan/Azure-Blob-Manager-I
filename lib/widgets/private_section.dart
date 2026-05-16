@@ -33,6 +33,12 @@ class PrivateFileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return ListView.builder(
+      itemCount: privateFiles.length,
+      itemBuilder: (context, index) {
+        final file = privateFiles[index];
+        return PrivateFileItemWidget(file: file);
+      },
+    );
   }
 }
