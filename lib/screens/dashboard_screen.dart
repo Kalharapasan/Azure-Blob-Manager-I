@@ -23,7 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return  return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text(AppConfig.appName),
         actions: [
@@ -84,4 +84,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  void _showUploadDialog() {}
 }
