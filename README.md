@@ -234,8 +234,8 @@ Include screenshots in `assets/docs/` and reference them here for quick visual c
 Example structure:
 
 ```
-assets/docs/screenshot-1.png
-assets/docs/screenshot-2.png
+assets/docs/screenshot-1.svg
+assets/docs/screenshot-2.svg
 ```
 
 How to capture screenshots from a connected Android device:
@@ -248,7 +248,7 @@ adb pull /sdcard/screen.png assets/docs/screenshot-1.png
 
 Add the images to the repo and commit. Reference images in this README like:
 
-![Dashboard](assets/docs/screenshot-1.png)
+![Dashboard](assets/docs/screenshot-1.svg)
 
 If you want, I can add placeholder images and an example `assets/docs` README gallery — tell me and I'll create them.
 
