@@ -153,7 +153,9 @@ class PrivateFileItemWidget extends StatelessWidget {
       ),
     );
   }
-  
-  Widget _getFilePreview(FileItem file) {}
+
+  Widget _getFilePreview(FileItem file) {
+    switch (file.category) {}
+  }
 
 }
