@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -11,31 +12,52 @@ import 'package:open_file/open_file.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
+import 'package:google_fonts/google_fonts.dart';
+
 import '../providers/file_provider.dart';
 import '../models/file_item.dart';
 
+// ─── Constants & Themes ──────────────────────────────────────────────────────
+
+class AppColors {
+  static const primary = Color(0xFF6366F1);
+  static const secondary = Color(0xFFEC4899);
+  static const accent = Color(0xFF10B981);
+  static const background = Color(0xFF0F172A);
+  static const surface = Color(0xFF1E293B);
+  static const card = Color(0xFF1E293B);
+  static const border = Color(0xFF334155);
+  static const textPrimary = Colors.white;
+  static const textSecondary = Color(0xFF94A3B8);
+
+  static Color categoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'image':    return const Color(0xFF38BDF8);
+      case 'video':    return const Color(0xFFF472B6);
+      case 'music':    return const Color(0xFFFACC15);
+      case 'document': return const Color(0xFF4ADE80);
+      case 'private':  return const Color(0xFFA78BFA);
+      default:         return const Color(0xFF94A3B8);
+    }
+  }
+
+  static IconData categoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'image':    return Icons.image_outlined;
+      case 'video':    return Icons.play_circle_outline_rounded;
+      case 'music':    return Icons.music_note_outlined;
+      case 'document': return Icons.description_outlined;
+      case 'private':  return Icons.lock_outline_rounded;
+      default:         return Icons.insert_drive_file_outlined;
+    }
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-Color _categoryColor(String category) {
-  switch (category) {
-    case 'image':    return const Color(0xFF4ECDC4);
-    case 'video':    return const Color(0xFFFF6B9D);
-    case 'music':    return const Color(0xFFFFD93D);
-    case 'document': return const Color(0xFF6BCB77);
-    default:         return const Color(0xFFFF9A3C);
-  }
-}
-
-IconData _categoryIcon(String category) {
-  switch (category) {
-    case 'image':    return Icons.image_rounded;
-    case 'video':    return Icons.play_circle_rounded;
-    case 'music':    return Icons.music_note_rounded;
-    case 'document': return Icons.description_rounded;
-    default:         return Icons.extension_rounded;
-  }
-}
 
 String _formatSize(int bytes) {
   if (bytes < 1024) return '${bytes}B';
@@ -43,26 +65,18 @@ String _formatSize(int bytes) {
   return '${(bytes / (1024 * 1024)).toStringAsFixed(2)}MB';
 }
 
-String _ext(String name) =>
-    name.contains('.') ? name.split('.').last.toLowerCase() : '';
+String _ext(String name) => p.extension(name).replaceFirst('.', '').toLowerCase();
 
 bool _isTextExt(String ext) => [
-      'txt', 'md', 'json', 'xml', 'csv', 'yaml', 'yml',
-      'html', 'htm', 'css', 'js', 'ts', 'dart', 'py',
-      'java', 'kt', 'swift', 'c', 'cpp', 'h', 'sh',
-      'log', 'ini', 'conf', 'toml', 'env',
+      'txt', 'md', 'json', 'xml', 'csv', 'yaml', 'yml', 'js', 'dart', 'py', 'java', 'log'
     ].contains(ext);
 
-bool _isImageExt(String ext) =>
-    ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext);
+bool _isImageExt(String ext) => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext);
+bool _isVideoExt(String ext) => ['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext);
+bool _isAudioExt(String ext) => ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'].contains(ext);
+bool _isPdfExt(String ext) => ext == 'pdf';
 
-bool _isVideoExt(String ext) =>
-    ['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v'].contains(ext);
-
-bool _isAudioExt(String ext) =>
-    ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 'opus'].contains(ext);
-
-// ─── FileList ────────────────────────────────────────────────────────────────
+// ─── Main FileList Widget ─────────────────────────────────────────────────────
 
 class FileList extends StatelessWidget {
   final String category;
@@ -85,6 +99,7 @@ class FileList extends StatelessWidget {
 
     List<FileItem> files = fp.files;
 
+    // Filtering
     if (category == 'private') {
       files = files.where((f) => f.isPrivate).toList();
     } else if (category != 'all') {
@@ -103,282 +118,537 @@ class FileList extends StatelessWidget {
       return _EmptyState(category: category, hasSearch: searchQuery.isNotEmpty);
     }
 
-    if (isGridView) {
-      return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 280,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.15,
-        ),
-        itemCount: files.length,
-        itemBuilder: (ctx, i) => _FileGridCard(file: files[i], index: i),
-      );
-    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+      child: isGridView 
+        ? _FileGridView(files: files, key: const ValueKey('grid'))
+        : _FileListView(files: files, key: const ValueKey('list')),
+    );
+  }
+}
 
+// ─── List & Grid Views ────────────────────────────────────────────────────────
+
+class _FileListView extends StatelessWidget {
+  final List<FileItem> files;
+  const _FileListView({super.key, required this.files});
+
+  @override
+  Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       itemCount: files.length,
-      itemBuilder: (ctx, i) => _FileListCard(file: files[i], index: i),
+      physics: const BouncingScrollPhysics(),
+      itemBuilder: (ctx, i) => _FileItemCard(
+        file: files[i], 
+        index: i, 
+        isGrid: false,
+        allFiles: files,
+      ),
     );
   }
 }
 
-// ─── List Card ───────────────────────────────────────────────────────────────
-
-class _FileListCard extends StatefulWidget {
-  final FileItem file;
-  final int index;
-  const _FileListCard({required this.file, required this.index});
+class _FileGridView extends StatelessWidget {
+  final List<FileItem> files;
+  const _FileGridView({super.key, required this.files});
 
   @override
-  State<_FileListCard> createState() => _FileListCardState();
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      physics: const BouncingScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: files.length,
+      itemBuilder: (ctx, i) => _FileItemCard(
+        file: files[i], 
+        index: i, 
+        isGrid: true,
+        allFiles: files,
+      ),
+    );
+  }
 }
 
-class _FileListCardState extends State<_FileListCard>
-    with SingleTickerProviderStateMixin {
-  bool _hovered = false;
-  late AnimationController _ctrl;
-  late Animation<double> _fade;
+// ─── File Item Card ──────────────────────────────────────────────────────────
+
+class _FileItemCard extends StatefulWidget {
+  final FileItem file;
+  final int index;
+  final bool isGrid;
+  final List<FileItem> allFiles;
+
+  const _FileItemCard({
+    required this.file, 
+    required this.index, 
+    required this.isGrid,
+    required this.allFiles,
+  });
+
+  @override
+  State<_FileItemCard> createState() => _FileItemCardState();
+}
+
+class _FileItemCardState extends State<_FileItemCard> with SingleTickerProviderStateMixin {
+  bool _isHovered = false;
+  late AnimationController _entryController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
+    _entryController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 300 + widget.index * 40),
+      duration: Duration(milliseconds: 400 + (widget.index * 30).clamp(0, 400)),
     );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _ctrl.forward();
+    _scaleAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOutBack,
+    );
+    _entryController.forward();
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _entryController.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    _MediaViewer.show(context, widget.file, widget.allFiles);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = _categoryColor(widget.file.category);
     final f = widget.file;
+    final color = AppColors.categoryColor(f.category);
 
-    return FadeTransition(
-      opacity: _fade,
+    return ScaleTransition(
+      scale: _scaleAnimation,
       child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit:  (_) => setState(() => _hovered = false),
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(vertical: 4),
+          margin: widget.isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: _hovered ? color.withOpacity(0.08) : const Color(0xFF131326),
-            borderRadius: BorderRadius.circular(18),
+            color: _isHovered ? AppColors.surface.withOpacity(0.8) : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _hovered ? color.withOpacity(0.4) : const Color(0xFF2A2A45),
-              width: _hovered ? 1.5 : 1,
+              color: _isHovered ? color.withOpacity(0.5) : AppColors.border,
+              width: _isHovered ? 1.5 : 1,
             ),
-            boxShadow: _hovered
-                ? [BoxShadow(color: color.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, 8))]
-                : [],
+            boxShadow: _isHovered ? [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              )
+            ] : [],
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: () => _openViewer(context, f),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(children: [
-                _FileThumbnail(file: f, size: 44),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(f.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: cs.onSurface)),
-                    const SizedBox(height: 3),
-                    Row(children: [
-                      _Chip(label: f.category, color: color),
-                      const SizedBox(width: 6),
-                      _Chip(label: _formatSize(f.size), color: Colors.white30),
-                      if (f.isPrivate) ...[
-                        const SizedBox(width: 6),
-                        _Chip(label: 'Private', color: const Color(0xFFB8B4FF), icon: Icons.lock_rounded),
-                      ],
-                    ]),
-                  ]),
+            onTap: _onTap,
+            borderRadius: BorderRadius.circular(20),
+            child: widget.isGrid ? _buildGridContent(f, color) : _buildListContent(f, color),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListContent(FileItem f, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          _FileThumbnail(file: f, size: 48),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  f.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Text(_fmtDate(f.uploadedAt),
-                    style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.35))),
-                const SizedBox(width: 8),
-                _FileActions(file: f),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _fmtDate(DateTime dt) {
-    final l = dt.toLocal();
-    return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')}';
-  }
-}
-
-// ─── Grid Card ───────────────────────────────────────────────────────────────
-
-class _FileGridCard extends StatefulWidget {
-  final FileItem file;
-  final int index;
-  const _FileGridCard({required this.file, required this.index});
-
-  @override
-  State<_FileGridCard> createState() => _FileGridCardState();
-}
-
-class _FileGridCardState extends State<_FileGridCard>
-    with SingleTickerProviderStateMixin {
-  bool _hovered = false;
-  late AnimationController _ctrl;
-  late Animation<double> _fade;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 300 + widget.index * 50),
-    );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = _categoryColor(widget.file.category);
-    final f = widget.file;
-
-    return FadeTransition(
-      opacity: _fade,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit:  (_) => setState(() => _hovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            color: _hovered ? color.withOpacity(0.08) : const Color(0xFF131326),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _hovered ? color.withOpacity(0.5) : const Color(0xFF2A2A45),
-              width: _hovered ? 1.5 : 1,
-            ),
-            boxShadow: _hovered
-                ? [BoxShadow(color: color.withOpacity(0.15), blurRadius: 30, offset: const Offset(0, 10))]
-                : [],
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () => _openViewer(context, f),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  _FileThumbnail(file: f, size: 48),
-                  const Spacer(),
-                  _FileActions(file: f),
-                ]),
-                const Spacer(),
-                Text(f.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface, height: 1.3)),
-                const SizedBox(height: 6),
-                Row(children: [
-                  _Chip(label: _formatSize(f.size), color: Colors.white30),
-                  if (f.isPrivate) ...[
-                    const SizedBox(width: 6),
-                    _Chip(label: 'Private', color: const Color(0xFFB8B4FF), icon: Icons.lock_rounded),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    _Tag(label: _formatSize(f.size), color: Colors.white12),
+                    const SizedBox(width: 8),
+                    _Tag(label: f.category, color: color.withOpacity(0.2), textColor: color),
+                    if (f.isPrivate) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.lock_rounded, size: 12, color: AppColors.secondary),
+                    ],
                   ],
-                ]),
-              ]),
+                ),
+              ],
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          Text(
+            _timeAgo(f.uploadedAt),
+            style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          const SizedBox(width: 8),
+          _FileActionsMenu(file: f),
+        ],
       ),
     );
   }
+
+  Widget _buildGridContent(FileItem f, Color color) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Center(child: _FileThumbnail(file: f, size: 70)),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            f.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatSize(f.size),
+                style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+              ),
+              _FileActionsMenu(file: f, isSmall: true),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'Just now';
+  }
 }
 
-// ─── Thumbnail ────────────────────────────────────────────────────────────────
+// ─── Thumbnail Widget ─────────────────────────────────────────────────────────
 
 class _FileThumbnail extends StatelessWidget {
   final FileItem file;
   final double size;
+
   const _FileThumbnail({required this.file, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final color = _categoryColor(file.category);
     final ext = _ext(file.name);
+    final color = AppColors.categoryColor(file.category);
 
     if (_isImageExt(ext)) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(size * 0.27),
-        child: Image.network(
-          file.url,
-          width: size, height: size, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _iconBox(color),
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 0.25),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.25),
+          child: Image.network(
+            file.url,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return _buildPlaceholder(color, Icons.image_outlined);
+            },
+            errorBuilder: (context, error, stackTrace) => 
+                _buildPlaceholder(color, Icons.broken_image_outlined),
+          ),
         ),
       );
     }
 
     if (_isVideoExt(ext)) {
-      return Stack(children: [
-        _iconBox(color),
-        Positioned.fill(child: Icon(Icons.play_circle_fill_rounded, color: color.withOpacity(0.6), size: size * 0.45)),
-      ]);
+      return _buildPlaceholder(color, Icons.play_circle_fill_rounded);
+    }
+    
+    if (_isPdfExt(ext)) {
+      return _buildPlaceholder(color, Icons.picture_as_pdf_outlined);
     }
 
-    return _iconBox(color);
+    return _buildPlaceholder(color, AppColors.categoryIcon(file.category));
   }
 
-  Widget _iconBox(Color color) => Container(
-    width: size, height: size,
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.15),
-      borderRadius: BorderRadius.circular(size * 0.27),
-    ),
-    child: Icon(_categoryIcon(file.category), color: color, size: size * 0.5),
-  );
+  Widget _buildPlaceholder(Color color, IconData icon) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(size * 0.25),
+      ),
+      child: Icon(icon, color: color, size: size * 0.45),
+    );
+  }
 }
 
-// ─── Viewer dispatcher ────────────────────────────────────────────────────────
+// ─── Media Viewer (Advanced) ──────────────────────────────────────────────────
 
-void _openViewer(BuildContext context, FileItem file) {
-  final ext = _ext(file.name);
-  Widget dialog;
+class _MediaViewer extends StatefulWidget {
+  final FileItem initialFile;
+  final List<FileItem> allFiles;
 
-  if (_isImageExt(ext)) {
-    dialog = _ImageViewer(file: file);
-  } else if (_isVideoExt(ext)) {
-    dialog = _VideoViewer(file: file);
-  } else if (_isAudioExt(ext)) {
-    dialog = _AudioViewer(file: file);
-  } else if (_isTextExt(ext)) {
-    dialog = _TextViewer(file: file);
-  } else {
-    dialog = _FileInfoDialog(file: file);
+  const _MediaViewer({required this.initialFile, required this.allFiles});
+
+  static void show(BuildContext context, FileItem file, List<FileItem> allFiles) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Media Viewer',
+      barrierColor: Colors.black90,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => _MediaViewer(initialFile: file, allFiles: allFiles),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutQuad)),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
-  showDialog(context: context, builder: (_) => dialog);
+  @override
+  State<_MediaViewer> createState() => _MediaViewerState();
 }
 
-// ─── Image Viewer ─────────────────────────────────────────────────────────────
+class _MediaViewerState extends State<_MediaViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+  late List<FileItem> _swipeableFiles;
+
+  @override
+  void initState() {
+    super.initState();
+    // Only allow swiping between media/docs that are previewable
+    _swipeableFiles = widget.allFiles.where((f) {
+      final ext = _ext(f.name);
+      return _isImageExt(ext) || _isVideoExt(ext) || _isAudioExt(ext) || _isPdfExt(ext) || _isTextExt(ext);
+    }).toList();
+
+    _currentIndex = _swipeableFiles.indexOf(widget.initialFile);
+    if (_currentIndex == -1) {
+      _swipeableFiles = [widget.initialFile];
+      _currentIndex = 0;
+    }
+    
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Background blur
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(color: Colors.black54),
+            ),
+          ),
+
+          // Main Content
+          PageView.builder(
+            controller: _pageController,
+            itemCount: _swipeableFiles.length,
+            onPageChanged: (idx) => setState(() => _currentIndex = idx),
+            itemBuilder: (context, index) {
+              return _ViewerDispatcher(file: _swipeableFiles[index]);
+            },
+          ),
+
+          // Header
+          _buildHeader(),
+
+          // Navigation Arrows (Desktop/Web)
+          if (_swipeableFiles.length > 1) ...[
+            _buildNavArrow(Icons.chevron_left_rounded, true),
+            _buildNavArrow(Icons.chevron_right_rounded, false),
+          ],
+
+          // Footer Info
+          _buildFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final f = _swipeableFiles[_currentIndex];
+    return Positioned(
+      top: 0, left: 0, right: 0,
+      child: Container(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, left: 20, right: 20, bottom: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black87, Colors.transparent],
+          ),
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    f.name,
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '${_formatSize(f.size)} • ${f.category}',
+                    style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            _ActionIcon(icon: Icons.download_rounded, onTap: () => _download(context, f)),
+            _ActionIcon(icon: Icons.share_outlined, onTap: () => _share(f)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    if (_swipeableFiles.length <= 1) return const SizedBox.shrink();
+    return Positioned(
+      bottom: 40, left: 0, right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Text(
+            '${_currentIndex + 1} / ${_swipeableFiles.length}',
+            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavArrow(IconData icon, bool isLeft) {
+    return Positioned(
+      left: isLeft ? 20 : null,
+      right: isLeft ? null : 20,
+      top: 0, bottom: 0,
+      child: Center(
+        child: InkWell(
+          onTap: () {
+            _pageController.animateToPage(
+              isLeft ? _currentIndex - 1 : _currentIndex + 1,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Icon(icon, color: Colors.white70, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _share(FileItem f) {
+    Clipboard.setData(ClipboardData(text: f.url));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link copied to clipboard')));
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _ActionIcon({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.white, size: 22),
+    );
+  }
+}
+
+// ─── Viewer Dispatcher ────────────────────────────────────────────────────────
+
+class _ViewerDispatcher extends StatelessWidget {
+  final FileItem file;
+  const _ViewerDispatcher({required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = _ext(file.name);
+
+    if (_isImageExt(ext)) return _ImageViewer(file: file);
+    if (_isVideoExt(ext)) return _VideoViewer(file: file);
+    if (_isAudioExt(ext)) return _AudioViewer(file: file);
+    if (_isPdfExt(ext))   return _PdfViewer(file: file);
+    if (_isTextExt(ext))  return _TextViewer(file: file);
+
+    return _UnsupportedViewer(file: file);
+  }
+}
+
+// ─── Sub-Viewers ──────────────────────────────────────────────────────────────
 
 class _ImageViewer extends StatelessWidget {
   final FileItem file;
@@ -386,468 +656,249 @@ class _ImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.92,
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F0F1A),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2A2A45)),
-          ),
-          child: Column(children: [
-            _ViewerHeader(file: file),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                child: PhotoView(
-                  imageProvider: NetworkImage(file.url),
-                  backgroundDecoration: const BoxDecoration(color: Color(0xFF0A0A14)),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 4,
-                  loadingBuilder: (_, __) =>
-                      const Center(child: CircularProgressIndicator(color: Color(0xFF4ECDC4))),
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.broken_image_rounded, color: Color(0xFF4ECDC4), size: 56),
-                      const SizedBox(height: 12),
-                      Text('Cannot load image',
-                          style: TextStyle(color: Colors.white.withOpacity(0.4))),
-                    ]),
-                  ),
-                ),
-              ),
-            ),
-          ]),
-        ),
-      ),
+    return PhotoView(
+      imageProvider: NetworkImage(file.url),
+      backgroundDecoration: const BoxDecoration(color: Colors.transparent),
+      loadingBuilder: (context, event) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      minScale: PhotoViewComputedScale.contained,
+      maxScale: PhotoViewComputedScale.covered * 3,
     );
   }
 }
 
-// ─── Video Viewer ─────────────────────────────────────────────────────────────
-
 class _VideoViewer extends StatefulWidget {
   final FileItem file;
   const _VideoViewer({required this.file});
-
   @override
   State<_VideoViewer> createState() => _VideoViewerState();
 }
 
 class _VideoViewerState extends State<_VideoViewer> {
-  late VideoPlayerController _ctrl;
+  late VideoPlayerController _controller;
   bool _initialized = false;
-  bool _hasError = false;
-  bool _showControls = true;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = VideoPlayerController.networkUrl(Uri.parse(widget.file.url))
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.file.url))
       ..initialize().then((_) {
-        if (mounted) setState(() => _initialized = true);
-        _ctrl.play();
-      }).catchError((_) {
-        if (mounted) setState(() => _hasError = true);
+        setState(() => _initialized = true);
+        _controller.play();
       });
-    _ctrl.addListener(() { if (mounted) setState(() {}); });
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.92,
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0A0A14),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2A2A45)),
-          ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _ViewerHeader(file: widget.file),
-            Flexible(
-              child: GestureDetector(
-                onTap: () => setState(() => _showControls = !_showControls),
-                child: Container(
-                  color: Colors.black,
-                  child: _hasError
-                      ? _errorView()
-                      : !_initialized
-                          ? const SizedBox(
-                              height: 200,
-                              child: Center(child: CircularProgressIndicator(color: Color(0xFFFF6B9D))))
-                          : Stack(alignment: Alignment.center, children: [
-                              AspectRatio(
-                                aspectRatio: _ctrl.value.aspectRatio,
-                                child: VideoPlayer(_ctrl),
-                              ),
-                              if (_showControls) _controls(),
-                            ]),
-                ),
-              ),
-            ),
-            if (_initialized && !_hasError) _scrubber(),
-          ]),
+    if (!_initialized) return const Center(child: CircularProgressIndicator(color: AppColors.secondary));
+    return Center(
+      child: AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            VideoPlayer(_controller),
+            VideoProgressIndicator(_controller, allowScrubbing: true, colors: VideoProgressColors(playedColor: AppColors.secondary)),
+            _VideoControls(controller: _controller),
+          ],
         ),
       ),
     );
   }
-
-  Widget _controls() {
-    final playing = _ctrl.value.isPlaying;
-    return AnimatedOpacity(
-      opacity: _showControls ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            colors: [Color(0x88000000), Colors.transparent],
-            radius: 0.7,
-          ),
-        ),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _ctrlBtn(Icons.replay_10_rounded, () {
-            _ctrl.seekTo(_ctrl.value.position - const Duration(seconds: 10));
-          }),
-          const SizedBox(width: 20),
-          GestureDetector(
-            onTap: () => playing ? _ctrl.pause() : _ctrl.play(),
-            child: Container(
-              width: 64, height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFF6B9D).withOpacity(0.9),
-              ),
-              child: Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white, size: 36),
-            ),
-          ),
-          const SizedBox(width: 20),
-          _ctrlBtn(Icons.forward_10_rounded, () {
-            _ctrl.seekTo(_ctrl.value.position + const Duration(seconds: 10));
-          }),
-        ]),
-      ),
-    );
-  }
-
-  Widget _ctrlBtn(IconData icon, VoidCallback fn) => GestureDetector(
-    onTap: fn,
-    child: Container(
-      width: 44, height: 44,
-      decoration: const BoxDecoration(color: Color(0x66000000), shape: BoxShape.circle),
-      child: Icon(icon, color: Colors.white70, size: 24),
-    ),
-  );
-
-  Widget _scrubber() {
-    final pos = _ctrl.value.position;
-    final dur = _ctrl.value.duration;
-    final prog = dur.inMilliseconds > 0 ? pos.inMilliseconds / dur.inMilliseconds : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      color: const Color(0xFF0A0A14),
-      child: Column(children: [
-        SliderTheme(
-          data: SliderThemeData(
-            trackHeight: 3,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            activeTrackColor: const Color(0xFFFF6B9D),
-            inactiveTrackColor: const Color(0xFF2A2A45),
-            thumbColor: const Color(0xFFFF6B9D),
-            overlayColor: const Color(0xFFFF6B9D).withOpacity(0.2),
-          ),
-          child: Slider(
-            value: prog.clamp(0.0, 1.0),
-            onChanged: (v) =>
-                _ctrl.seekTo(Duration(milliseconds: (v * dur.inMilliseconds).round())),
-          ),
-        ),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(_fmt(pos), style: const TextStyle(color: Colors.white38, fontSize: 11)),
-          IconButton(
-            onPressed: () {
-              _ctrl.setVolume(_ctrl.value.volume == 0 ? 1.0 : 0.0);
-              setState(() {});
-            },
-            icon: Icon(
-              _ctrl.value.volume == 0 ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-              color: Colors.white38, size: 18,
-            ),
-          ),
-          Text(_fmt(dur), style: const TextStyle(color: Colors.white38, fontSize: 11)),
-        ]),
-      ]),
-    );
-  }
-
-  Widget _errorView() => SizedBox(
-    height: 200,
-    child: Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.videocam_off_rounded, color: Color(0xFFFF6B9D), size: 56),
-        const SizedBox(height: 12),
-        const Text('Cannot play video', style: TextStyle(color: Colors.white54)),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: () =>
-              launchUrl(Uri.parse(widget.file.url), mode: LaunchMode.externalApplication),
-          icon: const Icon(Icons.open_in_new_rounded, size: 16),
-          label: const Text('Open externally'),
-        ),
-      ]),
-    ),
-  );
 }
 
-// ─── Audio Viewer ─────────────────────────────────────────────────────────────
+class _VideoControls extends StatelessWidget {
+  final VideoPlayerController controller;
+  const _VideoControls({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        controller.value.isPlaying ? controller.pause() : controller.play();
+      },
+      child: Container(
+        color: Colors.transparent,
+        child: Center(
+          child: AnimatedBuilder(
+            animation: controller,
+            builder: (context, child) {
+              return Icon(
+                controller.value.isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                color: Colors.white70,
+                size: 80,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _AudioViewer extends StatefulWidget {
   final FileItem file;
   const _AudioViewer({required this.file});
-
   @override
   State<_AudioViewer> createState() => _AudioViewerState();
 }
 
-class _AudioViewerState extends State<_AudioViewer>
-    with SingleTickerProviderStateMixin {
-  final AudioPlayer _player = AudioPlayer();
+class _AudioViewerState extends State<_AudioViewer> {
+  final _player = AudioPlayer();
   bool _loading = true;
-  bool _hasError = false;
-  late AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-      ..repeat(reverse: true);
-
-    _player.setUrl(widget.file.url).then((_) {
-      if (mounted) setState(() => _loading = false);
-    }).catchError((_) {
-      if (mounted) setState(() { _loading = false; _hasError = true; });
-    });
-
-    _player.playerStateStream.listen((_) { if (mounted) setState(() {}); });
-    _player.positionStream.listen((_) { if (mounted) setState(() {}); });
+    _player.setUrl(widget.file.url).then((_) => setState(() => _loading = false));
   }
 
   @override
-  void dispose() { _player.dispose(); _pulse.dispose(); super.dispose(); }
-
-  String _fmt(Duration? d) {
-    if (d == null) return '0:00';
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final playing = _player.playerState.playing;
-    final pos = _player.position;
-    final dur = _player.duration ?? Duration.zero;
-    final prog = dur.inMilliseconds > 0 ? pos.inMilliseconds / dur.inMilliseconds : 0.0;
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
+    if (_loading) return const Center(child: CircularProgressIndicator(color: AppColors.music));
+    return Center(
       child: Container(
-        width: 420,
+        width: 340,
+        padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF2A2A45)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 40)],
         ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _ViewerHeader(file: widget.file),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-            child: _hasError
-                ? _errorView()
-                : Column(children: [
-                    // Waveform visualization
-                    SizedBox(
-                      height: 80,
-                      child: AnimatedBuilder(
-                        animation: _pulse,
-                        builder: (_, __) => CustomPaint(
-                          painter: _WaveformPainter(
-                            progress: playing ? _pulse.value : 0.0,
-                            color: const Color(0xFFFFD93D),
-                          ),
-                          size: const Size(double.infinity, 80),
-                        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 120, height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.music.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.music_note_rounded, color: AppColors.music, size: 60),
+            ),
+            const SizedBox(height: 32),
+            StreamBuilder<PlayerState>(
+              stream: _player.playerStateStream,
+              builder: (context, snapshot) {
+                final playing = snapshot.data?.playing ?? false;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _audioBtn(Icons.replay_10_rounded, () => _player.seek(Duration(seconds: (_player.position.inSeconds - 10).clamp(0, 99999)))),
+                    const SizedBox(width: 24),
+                    GestureDetector(
+                      onTap: () => playing ? _player.pause() : _player.play(),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: const BoxDecoration(color: AppColors.music, shape: BoxShape.circle),
+                        child: Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded, color: Colors.black, size: 36),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    if (_loading)
-                      const CircularProgressIndicator(color: Color(0xFFFFD93D))
-                    else
-                      GestureDetector(
-                        onTap: () => playing ? _player.pause() : _player.play(),
-                        child: Container(
-                          width: 72, height: 72,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD93D), Color(0xFFFF9A3C)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFD93D).withOpacity(0.4),
-                                blurRadius: 20, spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                            color: Colors.black, size: 38,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    SliderTheme(
-                      data: SliderThemeData(
-                        trackHeight: 3,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                        activeTrackColor: const Color(0xFFFFD93D),
-                        inactiveTrackColor: const Color(0xFF2A2A45),
-                        thumbColor: const Color(0xFFFFD93D),
-                        overlayColor: const Color(0xFFFFD93D).withOpacity(0.2),
-                      ),
-                      child: Slider(
-                        value: prog.clamp(0.0, 1.0),
-                        onChanged: (v) => _player.seek(
-                            Duration(milliseconds: (v * dur.inMilliseconds).round())),
+                    const SizedBox(width: 24),
+                    _audioBtn(Icons.forward_10_rounded, () => _player.seek(Duration(seconds: (_player.position.inSeconds + 10)))),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            StreamBuilder<Duration>(
+              stream: _player.positionStream,
+              builder: (context, snapshot) {
+                final pos = snapshot.data ?? Duration.zero;
+                final dur = _player.duration ?? Duration.zero;
+                return Column(
+                  children: [
+                    Slider(
+                      value: pos.inMilliseconds.toDouble().clamp(0, dur.inMilliseconds.toDouble()),
+                      max: dur.inMilliseconds.toDouble(),
+                      activeColor: AppColors.music,
+                      onChanged: (v) => _player.seek(Duration(milliseconds: v.toInt())),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(_fmtDur(pos), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                          Text(_fmtDur(dur), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                        ],
                       ),
                     ),
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Text(_fmt(pos), style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                      Text(_fmt(dur), style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                    ]),
-                    const SizedBox(height: 12),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      _speedBtn('0.5x', 0.5),
-                      const SizedBox(width: 8),
-                      _speedBtn('1x', 1.0),
-                      const SizedBox(width: 8),
-                      _speedBtn('1.5x', 1.5),
-                      const SizedBox(width: 8),
-                      _speedBtn('2x', 2.0),
-                    ]),
-                  ]),
-          ),
-        ]),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _speedBtn(String label, double speed) {
-    final active = (_player.speed - speed).abs() < 0.01;
-    return GestureDetector(
-      onTap: () { _player.setSpeed(speed); setState(() {}); },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFFFFD93D).withOpacity(0.2) : const Color(0xFF2A2A45),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: active ? const Color(0xFFFFD93D) : Colors.transparent),
-        ),
-        child: Text(label, style: TextStyle(
-          fontSize: 11,
-          color: active ? const Color(0xFFFFD93D) : Colors.white38,
-          fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-        )),
-      ),
-    );
-  }
-
-  Widget _errorView() => Column(mainAxisSize: MainAxisSize.min, children: [
-    const Icon(Icons.music_off_rounded, color: Color(0xFFFFD93D), size: 56),
-    const SizedBox(height: 12),
-    const Text('Cannot play audio', style: TextStyle(color: Colors.white54)),
-    const SizedBox(height: 8),
-    TextButton.icon(
-      onPressed: () =>
-          launchUrl(Uri.parse(widget.file.url), mode: LaunchMode.externalApplication),
-      icon: const Icon(Icons.open_in_new_rounded, size: 16),
-      label: const Text('Open externally'),
-    ),
-  ]);
+  Widget _audioBtn(IconData icon, VoidCallback onTap) => IconButton(onPressed: onTap, icon: Icon(icon, color: Colors.white70));
+  String _fmtDur(Duration d) => '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 }
 
-// ─── Waveform Painter ─────────────────────────────────────────────────────────
+class _PdfViewer extends StatefulWidget {
+  final FileItem file;
+  const _PdfViewer({required this.file});
+  @override
+  State<_PdfViewer> createState() => _PdfViewerState();
+}
 
-class _WaveformPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  _WaveformPainter({required this.progress, required this.color});
-
-  static const _heights = [
-    0.3, 0.5, 0.8, 0.4, 0.7, 0.9, 0.5, 0.6, 0.8, 0.3,
-    0.7, 0.4, 0.9, 0.6, 0.5, 0.8, 0.3, 0.7, 0.5, 0.9,
-    0.4, 0.6, 0.8, 0.3, 0.7, 0.5, 0.9, 0.6, 0.4, 0.8,
-    0.3, 0.7, 0.5, 0.9, 0.4, 0.6, 0.8, 0.3, 0.5, 0.7,
-  ];
+class _PdfViewerState extends State<_PdfViewer> {
+  String? _localPath;
+  bool _loading = true;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final bars = _heights.length;
-    final bw = size.width / (bars * 2);
-    for (int i = 0; i < bars; i++) {
-      final pulse = 1.0 + progress * 0.45 * ((i % 3 == 0) ? 1.0 : 0.5);
-      final h = size.height * _heights[i] * pulse;
-      final x = (i * 2 + 1) * bw;
-      final top = (size.height - h) / 2;
-      canvas.drawLine(
-        Offset(x, top), Offset(x, top + h),
-        Paint()
-          ..color = color.withOpacity(0.65)
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 2.5,
-      );
+  void initState() {
+    super.initState();
+    _downloadPdf();
+  }
+
+  Future<void> _downloadPdf() async {
+    try {
+      final response = await http.get(Uri.parse(widget.file.url));
+      final bytes = response.bodyBytes;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/temp_preview.pdf');
+      await file.writeAsBytes(bytes);
+      if (mounted) setState(() { _localPath = file.path; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
-  bool shouldRepaint(_WaveformPainter old) => old.progress != progress;
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator(color: AppColors.document));
+    if (_localPath == null) return const Center(child: Text('Failed to load PDF', style: TextStyle(color: Colors.white)));
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: PDFView(filePath: _localPath),
+    );
+  }
 }
-
-// ─── Text Viewer ──────────────────────────────────────────────────────────────
 
 class _TextViewer extends StatefulWidget {
   final FileItem file;
   const _TextViewer({required this.file});
-
   @override
   State<_TextViewer> createState() => _TextViewerState();
 }
@@ -855,638 +906,220 @@ class _TextViewer extends StatefulWidget {
 class _TextViewerState extends State<_TextViewer> {
   String? _content;
   bool _loading = true;
-  bool _hasError = false;
-  double _fontSize = 13;
 
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final r = await http.get(Uri.parse(widget.file.url));
-      if (r.statusCode == 200) {
-        setState(() { _content = r.body; _loading = false; });
-      } else {
-        setState(() { _hasError = true; _loading = false; });
-      }
-    } catch (_) {
-      setState(() { _hasError = true; _loading = false; });
-    }
-  }
-
-  Color _textColor(String ext) {
-    if (['json', 'yaml', 'yml', 'toml'].contains(ext)) return const Color(0xFF6BCB77);
-    if (['html', 'htm', 'xml'].contains(ext)) return const Color(0xFFFF9A3C);
-    if (['js', 'ts', 'dart', 'py', 'java', 'kt', 'swift', 'c', 'cpp'].contains(ext))
-      return const Color(0xFF9B95FF);
-    if (['css'].contains(ext)) return const Color(0xFF4ECDC4);
-    if (['sh', 'bash', 'conf', 'ini'].contains(ext)) return const Color(0xFFFF9A3C);
-    return Colors.white70;
+    http.get(Uri.parse(widget.file.url)).then((r) {
+      if (mounted) setState(() { _content = r.body; _loading = false; });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final ext = _ext(widget.file.name);
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.92,
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0D0D1A),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2A2A45)),
-          ),
-          child: Column(children: [
-            _ViewerHeader(
-              file: widget.file,
-              trailing: Row(children: [
-                _iconBtn(Icons.remove_rounded, () => setState(() => _fontSize = (_fontSize - 1).clamp(8, 24))),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text('${_fontSize.toInt()}pt',
-                      style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                ),
-                _iconBtn(Icons.add_rounded, () => setState(() => _fontSize = (_fontSize + 1).clamp(8, 24))),
-                const SizedBox(width: 6),
-                _iconBtn(Icons.copy_rounded, () {
-                  if (_content != null) {
-                    Clipboard.setData(ClipboardData(text: _content!));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied to clipboard')));
-                  }
-                }),
-              ]),
-            ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF6BCB77)))
-                  : _hasError
-                      ? Center(
-                          child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.error_outline_rounded, color: cs.error, size: 48),
-                            const SizedBox(height: 12),
-                            const Text('Could not load file',
-                                style: TextStyle(color: Colors.white38)),
-                          ]),
-                        )
-                      : Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(20),
-                            child: SelectableText(
-                              _content ?? '',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: _fontSize,
-                                color: _textColor(ext),
-                                height: 1.65,
-                              ),
-                            ),
-                          ),
-                        ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _iconBtn(IconData icon, VoidCallback fn) => GestureDetector(
-    onTap: fn,
-    child: Container(
-      width: 28, height: 28,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A45),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Icon(icon, size: 14, color: Colors.white54),
-    ),
-  );
-}
-
-// ─── File Info (unsupported types) ────────────────────────────────────────────
-
-class _FileInfoDialog extends StatelessWidget {
-  final FileItem file;
-  const _FileInfoDialog({required this.file});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = _categoryColor(file.category);
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        width: 420,
-        padding: const EdgeInsets.all(0),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF2A2A45)),
-        ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _ViewerHeader(file: file),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F0F1A),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF2A2A45)),
-                ),
-                child: Column(children: [
-                  Container(
-                    width: 64, height: 64,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Icon(_categoryIcon(file.category), color: color, size: 34),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No built-in preview for .${_ext(file.name)} files',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: cs.onSurface.withOpacity(0.5), fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () =>
-                        launchUrl(Uri.parse(file.url), mode: LaunchMode.externalApplication),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text('Open in Browser'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: color,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ]),
-              ),
-              const SizedBox(height: 16),
-              _MetaRow('Name', file.name),
-              _MetaRow('Category', file.category),
-              _MetaRow('Size', _formatSize(file.size)),
-              _MetaRow('Uploaded', file.uploadedAt.toLocal().toString().split('.').first),
-              _MetaRow('Private', file.isPrivate ? 'Yes' : 'No'),
-            ]),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-// ─── Shared Viewer Header ─────────────────────────────────────────────────────
-
-class _ViewerHeader extends StatelessWidget {
-  final FileItem file;
-  final Widget? trailing;
-  const _ViewerHeader({required this.file, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = _categoryColor(file.category);
-
+    if (_loading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF2A2A45))),
+      margin: const EdgeInsets.all(40),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
       ),
-      child: Row(children: [
-        Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(_categoryIcon(file.category), color: color, size: 18),
+      child: SingleChildScrollView(
+        child: SelectableText(
+          _content ?? '',
+          style: GoogleFonts.firaCode(color: Colors.white70, fontSize: 13, height: 1.6),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(file.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface)),
-            Text(_formatSize(file.size),
-                style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.4))),
-          ]),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-        const SizedBox(width: 4),
-        IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(Icons.close_rounded, color: cs.onSurface.withOpacity(0.5), size: 20),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        ),
-      ]),
+      ),
     );
   }
 }
 
-// ─── File Actions ─────────────────────────────────────────────────────────────
-
-class _FileActions extends StatelessWidget {
+class _UnsupportedViewer extends StatelessWidget {
   final FileItem file;
-  const _FileActions({required this.file});
+  const _UnsupportedViewer({required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.insert_drive_file_outlined, color: Colors.white24, size: 80),
+          const SizedBox(height: 24),
+          Text(
+            'No Preview Available',
+            style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'The file type ".${_ext(file.name)}" is not supported for in-app preview.',
+            style: GoogleFonts.inter(color: Colors.white54),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () => launchUrl(Uri.parse(file.url)),
+            icon: const Icon(Icons.open_in_browser_rounded),
+            label: const Text('Open in Browser'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Shared Components ────────────────────────────────────────────────────────
+
+class _Tag extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color? textColor;
+  const _Tag({required this.label, required this.color, this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: textColor ?? Colors.white70),
+      ),
+    );
+  }
+}
+
+class _FileActionsMenu extends StatelessWidget {
+  final FileItem file;
+  final bool isSmall;
+  const _FileActionsMenu({required this.file, this.isSmall = false});
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == 'delete')   _delete(context);
-        if (value == 'download') _download(context);
-        if (value == 'preview')  _openViewer(context, file);
-        if (value == 'share')    _copyLink(context);
-      },
-      color: const Color(0xFF1A1A2E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0xFF2A2A45)),
-      ),
-      itemBuilder: (_) => [
-        _item('preview',  'Open & View', Icons.visibility_rounded),
-        _item('download', 'Download',    Icons.download_rounded),
-        _item('share',    'Copy Link',   Icons.link_rounded),
-        const PopupMenuDivider(),
-        _item('delete',   'Delete',      Icons.delete_outline_rounded, destructive: true),
+      onSelected: (val) => _handle(context, val),
+      padding: EdgeInsets.zero,
+      icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: isSmall ? 18 : 22),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      itemBuilder: (context) => [
+        _buildItem('preview', 'Preview', Icons.visibility_outlined),
+        _buildItem('download', 'Download', Icons.file_download_outlined),
+        _buildItem('share', 'Copy Link', Icons.link_rounded),
+        const PopupMenuDivider(height: 1),
+        _buildItem('delete', 'Delete', Icons.delete_outline_rounded, color: Colors.redAccent),
       ],
-      child: Container(
-        width: 32, height: 32,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A2A45),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(Icons.more_vert_rounded, size: 18, color: Colors.white54),
-      ),
     );
   }
 
-  PopupMenuItem<String> _item(String value, String label, IconData icon, {bool destructive = false}) {
-    final color = destructive ? const Color(0xFFFF5F7E) : Colors.white70;
+  PopupMenuItem<String> _buildItem(String val, String label, IconData icon, {Color? color}) {
     return PopupMenuItem(
-      value: value,
-      child: Row(children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 10),
-        Text(label, style: TextStyle(fontSize: 13, color: color)),
-      ]),
+      value: val,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color ?? Colors.white70),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(color: color ?? Colors.white70, fontSize: 13)),
+        ],
+      ),
     );
   }
 
-  void _copyLink(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: file.url));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Link copied to clipboard')),
-    );
-  }
-
-  Future<void> _delete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => _ConfirmDeleteDialog(fileName: file.name),
-    );
-    if (confirmed == true && context.mounted) {
-      Provider.of<FileProvider>(context, listen: false)
-          .deleteFile(file.blobName, file.category);
-    }
-  }
-
-  Future<void> _download(BuildContext context) async {
-    try {
-      if (kIsWeb) {
-        try {
-          await launchUrl(Uri.parse(file.url), mode: LaunchMode.externalApplication);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening in new tab...')),
-            );
-          }
-        } catch (_) {
-          if (context.mounted) {
-            showDialog(context: context, builder: (_) => _ManualDownloadDialog(url: file.url));
-          }
-        }
-        return;
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const SizedBox(width: 16, height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-            const SizedBox(width: 12),
-            Text('Downloading ${file.name}…'),
-          ]),
-          duration: const Duration(seconds: 60),
-        ));
-      }
-
-      final bytes = await Provider.of<FileProvider>(context, listen: false)
-          .downloadFile(file.blobName);
-
-      String? outputPath;
-      final isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
-
-      if (isDesktop) {
-        try {
-          outputPath = await FilePicker.platform.saveFile(
-            dialogTitle: 'Save ${file.name}', fileName: file.name,
-          );
-        } catch (_) {}
-      }
-
-      if (outputPath == null && !kIsWeb) {
-        try {
-          Directory? dir;
-          if (Platform.isAndroid) {
-            final ext = Directory('/storage/emulated/0/Download');
-            dir = await ext.exists() ? ext : await getApplicationDocumentsDirectory();
-          } else {
-            dir = await getApplicationDocumentsDirectory();
-          }
-          outputPath = '${dir.path}/${file.name}';
-        } catch (_) {
-          final fb = await getApplicationDocumentsDirectory();
-          outputPath = '${fb.path}/${file.name}';
-        }
-      }
-
-      if (outputPath != null) {
-        await File(outputPath).writeAsBytes(bytes);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Saved: ${outputPath.split(RegExp(r'[/\\]')).last}'),
-            backgroundColor: const Color(0xFF4ECDC4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () => OpenFile.open(outputPath!),
-            ),
-          ));
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Download cancelled'),
-            backgroundColor: Color(0xFFFF9A3C),
-          ));
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Download failed: $e'),
-          backgroundColor: const Color(0xFFFF5F7E),
-        ));
-      }
+  void _handle(BuildContext context, String action) {
+    switch (action) {
+      case 'preview': _MediaViewer.show(context, file, [file]); break;
+      case 'download': _download(context, file); break;
+      case 'share':
+        Clipboard.setData(ClipboardData(text: file.url));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link copied')));
+        break;
+      case 'delete': _confirmDelete(context, file); break;
     }
   }
 }
 
-// ─── Chip ─────────────────────────────────────────────────────────────────────
+// ─── Actions Logic ────────────────────────────────────────────────────────────
 
-class _Chip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final IconData? icon;
-  const _Chip({required this.label, required this.color, this.icon});
+Future<void> _download(BuildContext context, FileItem file) async {
+  try {
+    if (kIsWeb) {
+      await launchUrl(Uri.parse(file.url), mode: LaunchMode.externalApplication);
+      return;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (icon != null) ...[Icon(icon, size: 9, color: color), const SizedBox(width: 3)],
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color)),
-      ]),
-    );
-  }
-}
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloading ${file.name}...')));
 
-// ─── Meta Row ─────────────────────────────────────────────────────────────────
+    final bytes = await Provider.of<FileProvider>(context, listen: false).downloadFile(file.blobName);
+    
+    String? path;
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      path = await FilePicker.platform.saveFile(fileName: file.name);
+    } else {
+      final dir = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
+      path = '${dir.path}/${file.name}';
+    }
 
-class _MetaRow extends StatelessWidget {
-  final String label, value;
-  const _MetaRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(children: [
-        SizedBox(
-          width: 80,
-          child: Text(label, style: TextStyle(fontSize: 12, color: cs.onSurface.withOpacity(0.4))),
-        ),
-        Expanded(
-          child: Text(value,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: cs.onSurface.withOpacity(0.75),
-                  fontWeight: FontWeight.w500)),
-        ),
-      ]),
-    );
-  }
-}
-
-// ─── Confirm Delete ───────────────────────────────────────────────────────────
-
-class _ConfirmDeleteDialog extends StatelessWidget {
-  final String fileName;
-  const _ConfirmDeleteDialog({required this.fileName});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        width: 360,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF2A2A45)),
-        ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: cs.error.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.delete_outline_rounded, color: cs.error, size: 26),
+    if (path != null) {
+      await File(path).writeAsBytes(bytes);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saved to $path'),
+            action: SnackBarAction(label: 'Open', onPressed: () => OpenFile.open(path)),
           ),
-          const SizedBox(height: 16),
-          Text('Delete File',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: cs.onSurface)),
-          const SizedBox(height: 8),
-          Text(
-            'Are you sure you want to delete "$fileName"? This cannot be undone.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.55)),
-          ),
-          const SizedBox(height: 24),
-          Row(children: [
-            Expanded(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: const BorderSide(color: Color(0xFF2A2A45)),
-                  ),
-                ),
-                child: Text('Cancel',
-                    style: TextStyle(color: cs.onSurface.withOpacity(0.6))),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.error,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('Delete',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ]),
-        ]),
-      ),
-    );
+        );
+      }
+    }
+  } catch (e) {
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
   }
 }
 
-// ─── Manual Download Dialog ───────────────────────────────────────────────────
-
-class _ManualDownloadDialog extends StatelessWidget {
-  final String url;
-  const _ManualDownloadDialog({required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        width: 400,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF2A2A45)),
+Future<void> _confirmDelete(BuildContext context, FileItem file) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Delete File?', style: TextStyle(color: Colors.white)),
+      content: Text('Are you sure you want to delete "${file.name}"?', style: const TextStyle(color: Colors.white70)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+          child: const Text('Delete'),
         ),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Row(children: [
-            Icon(Icons.link_off_rounded, color: cs.error, size: 24),
-            const SizedBox(width: 12),
-            Text('Download Link',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: cs.onSurface)),
-          ]),
-          const SizedBox(height: 16),
-          Text('Download was blocked. Use the link below:',
-              style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.6), height: 1.5)),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F0F1A),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF2A2A45)),
-            ),
-            child: SelectableText(url,
-                style: TextStyle(fontSize: 11, color: cs.primary, height: 1.4), maxLines: 4),
-          ),
-          const SizedBox(height: 24),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: TextStyle(color: cs.onSurface.withOpacity(0.5))),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () async {
-                try { await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication); }
-                catch (_) {}
-              },
-              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: const Text('Open'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2A2A45),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: url));
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Copied to clipboard')));
-              },
-              icon: const Icon(Icons.copy_rounded, size: 16),
-              label: const Text('Copy'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ]),
-        ]),
-      ),
-    );
+      ],
+    ),
+  );
+
+  if (confirmed == true && context.mounted) {
+    Provider.of<FileProvider>(context, listen: false).deleteFile(file.blobName, file.category);
   }
 }
 
-// ─── States ───────────────────────────────────────────────────────────────────
+// ─── State Widgets ────────────────────────────────────────────────────────────
 
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        SizedBox(width: 40, height: 40,
-            child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary)),
-        const SizedBox(height: 16),
-        Text('Loading files…',
-            style: TextStyle(color: cs.onSurface.withOpacity(0.45), fontSize: 13)),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: AppColors.primary),
+          const SizedBox(height: 16),
+          Text('Syncing with Azure...', style: GoogleFonts.inter(color: Colors.white54)),
+        ],
+      ),
     );
   }
 }
@@ -1496,18 +1129,17 @@ class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.error});
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.cloud_off_rounded, color: cs.error, size: 48),
-        const SizedBox(height: 12),
-        Text('Failed to load files',
-            style: TextStyle(color: cs.onSurface, fontSize: 15, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Text(error,
-            style: TextStyle(color: cs.onSurface.withOpacity(0.45), fontSize: 12),
-            textAlign: TextAlign.center),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: Colors.redAccent, size: 64),
+          const SizedBox(height: 16),
+          Text('Connection Error', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 8),
+          Text(error, style: GoogleFonts.inter(color: Colors.white54), textAlign: TextAlign.center),
+        ],
+      ),
     );
   }
 }
@@ -1516,25 +1148,36 @@ class _EmptyState extends StatelessWidget {
   final String category;
   final bool hasSearch;
   const _EmptyState({required this.category, required this.hasSearch});
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(hasSearch ? Icons.search_off_rounded : Icons.folder_open_rounded,
-            size: 56, color: cs.onSurface.withOpacity(0.2)),
-        const SizedBox(height: 16),
-        Text(
-          hasSearch ? 'No files match your search' : 'No files in this category',
-          style: TextStyle(
-              color: cs.onSurface.withOpacity(0.5), fontSize: 14, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          hasSearch ? 'Try a different search term' : 'Upload files using the button below',
-          style: TextStyle(color: cs.onSurface.withOpacity(0.3), fontSize: 12),
-        ),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(hasSearch ? Icons.search_off_rounded : Icons.folder_open_rounded, size: 80, color: Colors.white10),
+          const SizedBox(height: 24),
+          Text(
+            hasSearch ? 'No matches found' : 'No files in $category',
+            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white38),
+          ),
+          const SizedBox(height: 12),
+          if (!hasSearch)
+            ElevatedButton.icon(
+              onPressed: () {}, // Trigger upload
+              icon: const Icon(Icons.upload_file_rounded),
+              label: const Text('Upload First File'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            ),
+        ],
+      ),
     );
   }
+}
+
+// ─── Custom Colors for Categories ───────────────────────────────────────────
+
+extension AppColorsExt on AppColors {
+  static const music = Color(0xFFFACC15);
+  static const document = Color(0xFF4ADE80);
 }
