@@ -68,7 +68,7 @@ class AzureBlobService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Return the blob URL
-        return 'https://$_accountName.blob.core.windows.net/$_containerName/$blobPath';
+        return _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobPath').toString();
       } else {
         throw Exception(
           'Failed to upload file: ${response.statusCode} - ${response.body}',
@@ -101,7 +101,7 @@ class AzureBlobService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Return the blob URL
-        return 'https://$_accountName.blob.core.windows.net/$_containerName/$blobPath';
+        return _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobPath').toString();
       } else {
         throw Exception(
           'Failed to upload file: ${response.statusCode} - ${response.body}',
