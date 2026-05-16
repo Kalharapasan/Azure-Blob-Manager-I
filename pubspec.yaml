@@ -81,4 +81,4 @@ flutter:
   uses-material-design: true
   assets:
     - .env
-    - assets/env/app_env
+    - assets/env/

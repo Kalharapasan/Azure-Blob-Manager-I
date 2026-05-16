@@ -15,14 +15,30 @@ class AppConfig {
       dotenv.env['PRIVATE_SECTION_PASSWORD'] ?? '';
 
   static Future<void> load() async {
-    try {
-      await dotenv.load(fileName: "assets/env/app_env");
-    } catch (_) {
+    // We try multiple common paths to be safe across different platforms and configurations
+    final List<String> pathsToTry = [
+      'assets/env/app_env',
+      '.env',
+      'assets/.env',
+    ];
+
+    bool loaded = false;
+    for (final path in pathsToTry) {
       try {
-        await dotenv.load(fileName: ".env");
+        await dotenv.load(fileName: path);
+        print('Successfully loaded environment variables from $path');
+        loaded = true;
+        break;
       } catch (e) {
-        print("Warning: Failed to load environment variables: $e\nIf you recently added the .env file, you MUST completely stop and restart the Flutter app (hot reload is not enough).");
+        // Only print if we've tried everything and failed, or in debug mode
+        print('Attempted to load environment from $path but failed: $e');
       }
+    }
+
+    if (!loaded) {
+      print("Warning: Failed to load environment variables from any source. "
+          "If you recently added these files, you MUST completely stop and restart the Flutter app (hot reload is not enough). "
+          "Also ensure that the files are listed in pubspec.yaml.");
     }
   }
 }
