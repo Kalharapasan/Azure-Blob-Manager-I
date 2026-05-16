@@ -92,5 +92,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _togglePrivateSection() {}
+  void _togglePrivateSection() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Password'),
+        content: TextField(
+          controller: _passwordController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            hintText: 'Enter password to access private section',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _passwordController.clear();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (_passwordController.text == AppConfig.privateSectionPassword) {
+                setState(() {
+                  _showPrivate = true;
+                });
+                Navigator.of(context).pop();
+                _passwordController.clear();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Incorrect password')),
+                );
+              }
+            },
+            child: const Text('Unlock'),
+          ),
+        ],
+      ),
+    );
+  }
 }
