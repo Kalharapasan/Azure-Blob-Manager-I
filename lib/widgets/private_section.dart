@@ -33,6 +33,8 @@ class PrivateFileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fileProvider = Provider.of<FileProvider>(context);
+    
     return ListView.builder(
       itemCount: privateFiles.length,
       itemBuilder: (context, index) {
