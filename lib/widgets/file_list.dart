@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../providers/file_provider.dart';
 import '../models/file_item.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FileList extends StatelessWidget {
   final String category;
@@ -423,6 +426,21 @@ class _FileActions extends StatelessWidget {
 
   Future<void> _download(BuildContext context) async {
     try {
+      if (kIsWeb) {
+        final Uri url = Uri.parse(file.url);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Download started in new tab')),
+            );
+          }
+          return;
+        } else {
+          throw 'Could not open download link';
+        }
+      }
+
       // Show loading snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Downloading...'), duration: Duration(seconds: 1)),
@@ -431,18 +449,49 @@ class _FileActions extends StatelessWidget {
       final bytes = await Provider.of<FileProvider>(context, listen: false)
           .downloadFile(file.blobName);
       
-      // Request user to select a location to save the file
-      String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save File',
-        fileName: file.name,
-      );
+      String? outputPath;
+      // We check kIsWeb first to avoid Platform._operatingSystem crash on web
+      final bool isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
+      if (isDesktop) {
+        try {
+          outputPath = await FilePicker.platform.saveFile(
+            dialogTitle: 'Save File',
+            fileName: file.name,
+          );
+        } catch (e) {
+          debugPrint('saveFile failed: $e');
+        }
+      }
+
+      // If saveFile failed or we are on mobile, try getDirectoryPath
+      if (outputPath == null) {
+        try {
+          final directory = await FilePicker.platform.getDirectoryPath();
+          if (directory != null) {
+            outputPath = '$directory/${file.name}';
+          }
+        } catch (e) {
+          debugPrint('getDirectoryPath failed: $e');
+        }
+      }
+
+      // Final fallback to platform-specific storage
+      if (outputPath == null) {
+        final dir = Platform.isAndroid
+            ? await getExternalStorageDirectory()
+            : await getApplicationDocumentsDirectory();
+        if (dir != null) {
+          outputPath = '${dir.path}/${file.name}';
+        }
+      }
 
       if (outputPath != null) {
         final outputFile = File(outputPath);
         await outputFile.writeAsBytes(bytes);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File saved successfully')),
+            SnackBar(content: Text('File saved: ${outputPath.split('/').last}')),
           );
         }
       }
