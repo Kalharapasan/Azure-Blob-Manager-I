@@ -44,9 +44,12 @@ class StorageChart extends StatelessWidget {
       );
     });
 
+    final double chartHeight = MediaQuery.of(context).size.height * 0.25;
+
     return Card(
       margin: const EdgeInsets.all(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const Padding(
             padding: EdgeInsets.all(16.0),
@@ -55,7 +58,8 @@ class StorageChart extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-          Expanded(
+          SizedBox(
+            height: chartHeight,
             child: PieChart(
               PieChartData(
                 sections: sections,
