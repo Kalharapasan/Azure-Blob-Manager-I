@@ -126,6 +126,9 @@ class PrivateFileItemWidget extends StatelessWidget {
     try {
       final fileProvider = Provider.of<FileProvider>(context, listen: false);
       await fileProvider.downloadFile('${file.category}/${file.name}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File downloaded successfully')),
+      );
     } catch (e) {
       
     }
