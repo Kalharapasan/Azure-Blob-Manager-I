@@ -23,6 +23,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return  return Scaffold(
+      appBar: AppBar(
+        title: Text(AppConfig.appName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            onPressed: _togglePrivateSection,
+            tooltip: _showPrivate ? 'Hide Private Section' : 'Show Private Section',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Provider.of<FileProvider>(context, listen: false).loadStorageStats();
+              Provider.of<FileProvider>(context, listen: false).loadFiles(_selectedCategory);
+            },
+          ),
+        ],
+      ),
+      body: Row(
+        children: [
+          // Sidebar
+          CategorySidebar(
+            selectedCategory: _selectedCategory,
+            onCategorySelected: (category) {
+              setState(() {
+                _selectedCategory = category;
+                Provider.of<FileProvider>(context, listen: false).loadFiles(category);
+              });
+            },
+          ),
+          // Main content
+          Expanded(
+            child: Column(
+              children: [
+                // Storage Dashboard
+                Expanded(
+                  flex: 2,
+                  child: StorageChart(),
+                ),
+                // File List
+                Expanded(
+                  flex: 3,
+                  child: FileList(
+                    category: _selectedCategory,
+                    showPrivate: _showPrivate,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_showPrivate)
+            const PrivateSection(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showUploadDialog,
+        tooltip: 'Upload File',
+        child: const Icon(Icons.upload),
+      ),
+    );
   }
 }
