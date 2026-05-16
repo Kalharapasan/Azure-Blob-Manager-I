@@ -34,16 +34,20 @@ class PrivateFileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
-    final privateFiles = fileProvider.files.where((file) => file.isPrivate).toList();
+    final privateFiles = fileProvider.files
+        .where((file) => file.isPrivate)
+        .toList();
 
     if (fileProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (fileProvider.error != null) {
-      return Center(
-        child: Text('Error: ${fileProvider.error}'),
-      );
+      return Center(child: Text('Error: ${fileProvider.error}'));
+    }
+
+    if (privateFiles.isEmpty) {
+      return const Center(child: Text('No private files found'));
     }
 
     return ListView.builder(
