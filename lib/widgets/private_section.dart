@@ -114,7 +114,11 @@ class PrivateFileItemWidget extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File deleted successfully')),
         );
-      } catch (e) {}
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete file: $e')));
+      }
     }
   }
 }
