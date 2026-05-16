@@ -55,9 +55,11 @@ class StorageChart extends StatelessWidget {
               : MediaQuery.of(context).size.height * 0.25;
           final double chartHeight = min(availableHeight * 0.6, 300);
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          return SizedBox(
+            height: availableHeight,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
@@ -75,36 +77,39 @@ class StorageChart extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Data Analytics & Summary',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
-                          child: _buildSummaryCard(context, 'Total Files', '${stats['totalFiles'] ?? 0}', Icons.insert_drive_file),
-                        ),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
-                          child: _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
-                        ),
-                      ],
-                    ),
-                  ],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Data Analytics & Summary',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
+                            child: _buildSummaryCard(context, 'Total Files', '${stats['totalFiles'] ?? 0}', Icons.insert_drive_file),
+                          ),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
+                            child: _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
+            ),
           );
         },
       ),
