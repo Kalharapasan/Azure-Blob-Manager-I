@@ -190,8 +190,8 @@ class AzureBlobService {
                 }
               }
             } else {
-              final String searchPrefix = isPrivateCategory(category)
-                  ? 'private/$category/'
+                final String searchPrefix = (category == 'private')
+                  ? 'private/'
                   : '$category/';
               if (blobName.startsWith(searchPrefix)) {
                 match = true;
