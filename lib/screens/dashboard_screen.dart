@@ -36,11 +36,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(AppConfig.appName),
         actions: [
           IconButton(
-            icon: const Icon(Icons.lock_outline),
-            onPressed: _togglePrivateSection,
-            tooltip: 'Unlock Private Section',
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               Provider.of<FileProvider>(context, listen: false).loadStorageStats();
