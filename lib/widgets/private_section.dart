@@ -34,6 +34,7 @@ class PrivateFileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
+    final privateFiles = fileProvider.files.where((file) => file.isPrivate).toList();
 
     if (fileProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
