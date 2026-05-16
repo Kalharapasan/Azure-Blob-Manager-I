@@ -136,4 +136,6 @@ class PrivateFileItemWidget extends StatelessWidget {
     }
   }
 
+  Future<void> _openFile(BuildContext context, FileItem file) async {}
+
 }
