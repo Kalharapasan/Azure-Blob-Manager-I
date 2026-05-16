@@ -84,4 +84,7 @@ class PrivateFileItemWidget extends StatelessWidget {
         return const Icon(Icons.file_present, color: Colors.grey);
     }
   }
+
+  Future<void> _deleteFile(BuildContext context, FileItem file) async {}
+
 }
