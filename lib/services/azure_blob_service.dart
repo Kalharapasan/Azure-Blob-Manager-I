@@ -10,15 +10,34 @@ class AzureBlobService {
   late final String _baseUrl;
 
   AzureBlobService() {
-    _accountName = AppConfig.azureStorageAccount;
-    _sasToken = AppConfig.azureSaSToken;
-    _containerName = AppConfig.azureStorageContainer;
-    _baseUrl =
-        'https://$_accountName.blob.core.windows.net/$_containerName';
+    final String configuredUrl = AppConfig.azureStorageUrl.trim();
+    final Uri? parsedUrl =
+        configuredUrl.isEmpty ? null : Uri.tryParse(configuredUrl);
+
+    if (parsedUrl != null &&
+        parsedUrl.host.contains('.blob.core.windows.net') &&
+        parsedUrl.pathSegments.isNotEmpty) {
+      _accountName = parsedUrl.host.split('.').first;
+      _containerName = parsedUrl.pathSegments.first;
+      _sasToken = parsedUrl.query.trim().replaceFirst(RegExp(r'^\?'), '');
+    } else {
+      _accountName = AppConfig.azureStorageAccount;
+      _containerName = AppConfig.azureStorageContainer;
+      _sasToken = AppConfig.azureSaSToken;
+    }
+
+    _baseUrl = 'https://$_accountName.blob.core.windows.net/$_containerName';
   }
 
-  String _getUrlWithSasToken(String baseUrl) {
-    return '$baseUrl?$_sasToken';
+  Uri _buildUrl(String baseUrl, [Map<String, String> extraQuery = const {}]) {
+    final Uri base = Uri.parse(baseUrl);
+    final Uri sas = Uri(query: _sasToken);
+    final Map<String, String> query = {
+      ...base.queryParameters,
+      ...sas.queryParameters,
+      ...extraQuery,
+    };
+    return base.replace(queryParameters: query);
   }
 
   Future<String> uploadFile(
@@ -32,7 +51,7 @@ class AzureBlobService {
           ? 'private/$category/$fileName'
           : '$category/$fileName';
 
-      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
+      final Uri url = _buildUrl('$_baseUrl/$blobPath');
       final List<int> fileBytes = await file.readAsBytes();
       final http.Response response = await http.put(
         url,
@@ -66,7 +85,7 @@ class AzureBlobService {
           ? 'private/$category/$fileName'
           : '$category/$fileName';
 
-      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
+      final Uri url = _buildUrl('$_baseUrl/$blobPath');
       final http.Response response = await http.put(
         url,
         headers: {
@@ -90,7 +109,7 @@ class AzureBlobService {
 
   Future<List<int>> downloadFile(String blobPath) async {
     try {
-      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
+      final Uri url = _buildUrl('$_baseUrl/$blobPath');
       final http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         return response.bodyBytes;
@@ -106,7 +125,7 @@ class AzureBlobService {
 
   Future<void> deleteFile(String blobPath) async {
     try {
-      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
+      final Uri url = _buildUrl('$_baseUrl/$blobPath');
 
       final http.Response response = await http.delete(url);
 
@@ -128,7 +147,10 @@ class AzureBlobService {
   Future<List<FileItem>> listFiles(String category) async {
     try {
       final List<FileItem> files = [];
-      final Uri url = Uri.parse('${_getUrlWithSasToken(_baseUrl)}&restype=container&comp=list');
+      final Uri url = _buildUrl(_baseUrl, {
+        'restype': 'container',
+        'comp': 'list',
+      });
 
       final http.Response response = await http.get(url);
 
@@ -185,7 +207,10 @@ class AzureBlobService {
       int totalFiles = 0;
       int totalSize = 0;
 
-      final Uri url = Uri.parse('${_getUrlWithSasToken(_baseUrl)}&restype=container&comp=list');
+      final Uri url = _buildUrl(_baseUrl, {
+        'restype': 'container',
+        'comp': 'list',
+      });
 
       final http.Response response = await http.get(url);
 
@@ -248,7 +273,7 @@ class AzureBlobService {
 
   Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
     try {
-      final Uri url = Uri.parse('${_getUrlWithSasToken('$_baseUrl/$blobName')}&comp=properties');
+      final Uri url = _buildUrl('$_baseUrl/$blobName', {'comp': 'properties'});
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
         return {
@@ -267,7 +292,7 @@ class AzureBlobService {
   DateTime _parseDate(String? dateString) {
     if (dateString == null) return DateTime.now();
     try {
-      return DateTime.now();
+      return DateTime.parse(dateString).toLocal();
     } catch (e) {
       return DateTime.now();
     }
