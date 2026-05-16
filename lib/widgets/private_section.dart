@@ -63,7 +63,10 @@ class PrivateFileList extends StatelessWidget {
 class PrivateFileItemWidget extends StatelessWidget {
   final FileItem file;
 
-  const PrivateFileItemWidget({super.key});
+  const PrivateFileItemWidget({
+    Key? key,
+    required this.file,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
