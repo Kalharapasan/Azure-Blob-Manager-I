@@ -1,30 +1,49 @@
-import 'package:flutter/material.dart';
 import 'dart:math';
-
+import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../providers/file_provider.dart';
 
-class StorageChart extends StatelessWidget {
+class StorageChart extends StatefulWidget {
   const StorageChart({super.key});
+
+  @override
+  State<StorageChart> createState() => _StorageChartState();
+}
+
+class _StorageChartState extends State<StorageChart> {
+  int? _touchedIndex;
 
   @override
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
+    final cs = Theme.of(context).colorScheme;
 
     if (fileProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
     }
 
-    if (fileProvider.error != null) {
-      return Center(child: Text('Error: ${fileProvider.error}'));
-    }
-
-    // Build stats from the currently loaded files so the chart reflects
-    // the currently selected category (the provider loads files per category).
-    final List files = fileProvider.files;
+    final files = fileProvider.files;
     if (files.isEmpty) {
-      return const Center(child: Text('No storage data available'));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.pie_chart_outline_rounded,
+                size: 32, color: cs.onSurface.withOpacity(0.2)),
+            const SizedBox(height: 8),
+            Text('No data',
+                style: TextStyle(
+                    color: cs.onSurface.withOpacity(0.35), fontSize: 12)),
+          ],
+        ),
+      );
     }
 
     final Map<String, int> categorySizes = {};
@@ -32,122 +51,244 @@ class StorageChart extends StatelessWidget {
     int totalFiles = 0;
 
     for (final f in files) {
-      final String category = f.category ?? 'other';
-      final int size = (f.size is int) ? f.size as int : int.tryParse('${f.size}') ?? 0;
-      categorySizes[category] = (categorySizes[category] ?? 0) + size;
-      totalSize += size;
+      final cat = f.category ?? 'other';
+      final sz = (f.size is int) ? f.size as int : int.tryParse('${f.size}') ?? 0;
+      categorySizes[cat] = (categorySizes[cat] ?? 0) + sz;
+      totalSize += sz;
       totalFiles++;
     }
 
-    if (categorySizes.isEmpty || totalSize == 0) {
-      return const Center(child: Text('No storage data available'));
+    final _categoryColors = {
+      'image': const Color(0xFF4ECDC4),
+      'video': const Color(0xFFFF6B9D),
+      'music': const Color(0xFFFFD93D),
+      'document': const Color(0xFF6BCB77),
+      'other': const Color(0xFFFF9A3C),
+    };
+
+    final sections = <PieChartSectionData>[];
+    final entries = categorySizes.entries.toList();
+
+    for (int i = 0; i < entries.length; i++) {
+      final cat = entries[i].key;
+      final sz = entries[i].value;
+      final pct = totalSize > 0 ? (sz / totalSize) * 100 : 0.0;
+      final isTouched = i == _touchedIndex;
+      final color = _categoryColors[cat] ?? const Color(0xFF6C63FF);
+
+      sections.add(PieChartSectionData(
+        value: sz.toDouble(),
+        title: isTouched ? '${pct.toStringAsFixed(1)}%' : '',
+        radius: isTouched ? 52 : 44,
+        color: color,
+        titleStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        borderSide: isTouched
+            ? BorderSide(color: color.withOpacity(0.6), width: 3)
+            : const BorderSide(color: Colors.transparent),
+      ));
     }
 
-    final List<PieChartSectionData> sections = [];
-    categorySizes.forEach((category, size) {
-      final double percentage = totalSize > 0 ? (size / totalSize) * 100 : 0;
-      sections.add(
-        PieChartSectionData(
-          value: size.toDouble(),
-          title: '${percentage.toStringAsFixed(1)}%',
-          radius: 50,
-          color: _getColorForCategory(category),
-        ),
-      );
-    });
+    String centerLabel = totalFiles.toString();
+    String centerSub = 'files';
 
-    // Use a fixed-ish chart height so layout is stable across viewports.
-    final double chartHeight = min(220, MediaQuery.of(context).size.height * 0.28);
+    if (_touchedIndex != null && _touchedIndex! < entries.length) {
+      final cat = entries[_touchedIndex!].key;
+      final sz = entries[_touchedIndex!].value;
+      centerLabel = _formatSize(sz);
+      centerSub = cat;
+    }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2A2A45)),
+      ),
+      child: Row(
         children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Storage Usage by Category',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
+          // Pie chart
           SizedBox(
-            height: chartHeight,
-            child: Center(
-              child: PieChart(
-                PieChartData(
-                  sections: sections,
-                  centerSpaceRadius: 40,
-                  sectionsSpace: 2,
+            width: 140,
+            height: 140,
+            child: PieChart(
+              PieChartData(
+                sections: sections,
+                centerSpaceRadius: 32,
+                sectionsSpace: 2,
+                pieTouchData: PieTouchData(
+                  touchCallback: (event, response) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          response == null ||
+                          response.touchedSection == null) {
+                        _touchedIndex = null;
+                        return;
+                      }
+                      _touchedIndex =
+                          response.touchedSection!.touchedSectionIndex;
+                    });
+                  },
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          const SizedBox(width: 20),
+          // Legend + stats
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                      const Text(
-                        'Data Analytics & Summary',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 12,
-                        runSpacing: 8,
-                        children: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
-                            child: _buildSummaryCard(context, 'Total Files', '$totalFiles', Icons.insert_drive_file),
-                          ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
-                            child: _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
-                          ),
-                        ],
-                      ),
-                    ],
+                Text(
+                  'Storage Usage',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
                   ),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_formatSize(totalSize)} total · $totalFiles files',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: cs.onSurface.withOpacity(0.4),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: entries.map((e) {
+                    final color = _categoryColors[e.key] ?? const Color(0xFF6C63FF);
+                    final pct = totalSize > 0 ? (e.value / totalSize * 100) : 0.0;
+                    return _LegendItem(
+                      color: color,
+                      label: e.key,
+                      pct: pct,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          // Summary cards
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _StatCard(
+                icon: Icons.insert_drive_file_rounded,
+                label: 'Total Files',
+                value: '$totalFiles',
+                color: cs.primary,
+              ),
+              const SizedBox(height: 10),
+              _StatCard(
+                icon: Icons.data_usage_rounded,
+                label: 'Total Size',
+                value: _formatSize(totalSize),
+                color: cs.secondary,
               ),
             ],
           ),
-    );
-  }
-
-  Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  Color _getColorForCategory(String category) {
-    switch (category) {
-      case 'video':
-        return Colors.red;
-      case 'image':
-        return Colors.blue;
-      case 'music':
-        return Colors.green;
-      case 'document':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(2)}MB';
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final double pct;
+
+  const _LegendItem({required this.color, required this.label, required this.pct});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '${label[0].toUpperCase()}${label.substring(1)} ${pct.toStringAsFixed(0)}%',
+          style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.55)),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: cs.onSurface.withOpacity(0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
