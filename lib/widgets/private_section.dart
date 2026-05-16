@@ -130,7 +130,9 @@ class PrivateFileItemWidget extends StatelessWidget {
         const SnackBar(content: Text('File downloaded successfully')),
       );
     } catch (e) {
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to download file: $e')),
+      );
     }
   }
 
