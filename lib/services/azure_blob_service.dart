@@ -29,20 +29,24 @@ class AzureBlobService {
     _baseUrl = 'https://$_accountName.blob.core.windows.net/$_containerName';
   }
 
-  Uri _buildUrl(String baseUrl, [Map<String, String> extraQuery = const {}]) {
-    final String sanitizedBase = baseUrl.split('?').first;
-    final StringBuffer query = StringBuffer(_sasToken);
-
-    if (extraQuery.isNotEmpty) {
-      for (final MapEntry<String, String> entry in extraQuery.entries) {
-        if (query.isNotEmpty) {
-          query.write('&');
-        }
-        query.write('${Uri.encodeQueryComponent(entry.key)}=${Uri.encodeQueryComponent(entry.value)}');
-      }
+  Uri _buildUrl({String? blobPath, Map<String, String> extraQuery = const {}}) {
+    final List<String> pathSegments = [...Uri.parse(_baseUrl).pathSegments];
+    if (blobPath != null && blobPath.isNotEmpty) {
+      pathSegments.addAll(blobPath.split('/'));
     }
 
-    return Uri.parse('$sanitizedBase?${query.toString()}');
+    final query = <String, dynamic>{};
+    // Parse existing SAS token parameters
+    final sasUri = Uri.parse('?$_sasToken');
+    query.addAll(sasUri.queryParameters);
+    query.addAll(extraQuery);
+
+    return Uri(
+      scheme: 'https',
+      host: '$_accountName.blob.core.windows.net',
+      pathSegments: pathSegments,
+      queryParameters: query.isEmpty ? null : query,
+    );
   }
 
   Future<String> uploadFile(
@@ -114,7 +118,7 @@ class AzureBlobService {
 
   Future<List<int>> downloadFile(String blobPath) async {
     try {
-      final Uri url = _buildUrl('$_baseUrl/$blobPath');
+      final Uri url = _buildUrl(blobPath: blobPath);
       final http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         return response.bodyBytes;
@@ -217,7 +221,7 @@ class AzureBlobService {
               final FileItem fileItem = FileItem(
                 name: fileName,
                 blobName: blobName,
-                url: _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobName').toString(),
+                url: _buildUrl(blobPath: blobName).toString(),
                 size: contentLength,
                 category: fileCategory,
                 uploadedAt: lastModified,
@@ -314,7 +318,7 @@ class AzureBlobService {
 
   Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
     try {
-      final Uri url = _buildUrl('$_baseUrl/$blobName', {'comp': 'properties'});
+      final Uri url = _buildUrl(blobPath: blobName, extraQuery: {'comp': 'properties'});
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
         return {
