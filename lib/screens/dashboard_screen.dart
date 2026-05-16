@@ -38,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.lock_outline),
             onPressed: _togglePrivateSection,
-            tooltip: _showPrivate ? 'Hide Private Section' : 'Show Private Section',
+            tooltip: 'Unlock Private Section',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -55,10 +55,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           CategorySidebar(
             selectedCategory: _selectedCategory,
             onCategorySelected: (category) {
-              setState(() {
-                _selectedCategory = category;
+              if (category == 'private') {
+                _togglePrivateSection();
+              } else {
+                setState(() {
+                  _selectedCategory = category;
+                });
                 Provider.of<FileProvider>(context, listen: false).loadFiles(category);
-              });
+              }
             },
           ),
           // Main content
@@ -73,10 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // File List
                 Expanded(
                   flex: 3,
-                  child: FileList(
-                    category: _selectedCategory,
-                    showPrivate: _showPrivate,
-                  ),
+                  child: FileList(category: _selectedCategory),
                 ),
               ],
             ),
