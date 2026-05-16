@@ -85,6 +85,8 @@ class PrivateFileItemWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _deleteFile(BuildContext context, FileItem file) async {}
+  Future<void> _deleteFile(BuildContext context, FileItem file) async {
+    final confirmed = await showDialog<bool>();
+  }
 
 }
