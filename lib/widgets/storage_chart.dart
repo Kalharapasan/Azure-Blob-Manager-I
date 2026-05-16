@@ -67,24 +67,43 @@ class StorageChart extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Summary Usage',
+                  'Data Analytics & Summary',
+                  textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Total Files: ${stats['totalFiles'] ?? 0}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  'Total Size: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSummaryCard(context, 'Total Files', '${stats['totalFiles'] ?? 0}', Icons.insert_drive_file),
+                    _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
+                  ],
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context, String title, String value, IconData icon) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Icon(icon, size: 32, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 8),
+            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+          ],
+        ),
       ),
     );
   }

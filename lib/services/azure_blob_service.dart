@@ -171,13 +171,35 @@ class AzureBlobService {
           final int endIndex = line.indexOf('</Name>');
           if (endIndex > 0) {
             final String blobName = line.substring(0, endIndex);
-            final String searchPrefix = isPrivateCategory(category)
-                ? 'private/$category/'
-                : '$category/';
+            
+            bool match = false;
+            String fileCategory = category;
+            String fileName = blobName;
+            bool isPrivate = blobName.startsWith('private/');
 
-            if (blobName.startsWith(searchPrefix)) {
-              final String fileName = blobName.substring(searchPrefix.length);
-              
+            if (category == 'all') {
+              match = true;
+              final List<String> pathParts = blobName.split('/');
+              if (pathParts.length >= 2) {
+                if (pathParts[0] == 'private' && pathParts.length >= 3) {
+                  fileCategory = pathParts[1];
+                  fileName = pathParts.sublist(2).join('/');
+                } else {
+                  fileCategory = pathParts[0];
+                  fileName = pathParts.sublist(1).join('/');
+                }
+              }
+            } else {
+              final String searchPrefix = isPrivateCategory(category)
+                  ? 'private/$category/'
+                  : '$category/';
+              if (blobName.startsWith(searchPrefix)) {
+                match = true;
+                fileName = blobName.substring(searchPrefix.length);
+              }
+            }
+
+            if (match) {
               final int contentLengthStart = line.indexOf('<Content-Length>');
               final int contentLengthEnd = line.indexOf('</Content-Length>');
               int contentLength = 0;
@@ -197,9 +219,9 @@ class AzureBlobService {
                 url:
                     'https://$_accountName.blob.core.windows.net/$_containerName/$blobName',
                 size: contentLength,
-                category: category,
+                category: fileCategory,
                 uploadedAt: lastModified,
-                isPrivate: blobName.startsWith('private/'),
+                isPrivate: isPrivate,
               );
               files.add(fileItem);
             }
