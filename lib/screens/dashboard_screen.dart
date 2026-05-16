@@ -91,4 +91,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (BuildContext context) => const FileUploadDialog(),
     );
   }
+
+  void _togglePrivateSection() {}
 }
