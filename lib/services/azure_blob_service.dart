@@ -14,7 +14,11 @@ class AzureBlobService {
     _sasToken = AppConfig.azureSaSToken;
     _containerName = AppConfig.azureStorageContainer;
     _baseUrl =
-        'https://azureblobmanager1.blob.core.windows.net/azureblobmanager?sp=r&st=2026-05-16T06:26:27Z&se=2026-05-16T14:41:27Z&sv=2025-11-05&sr=c&sig=qjr6XxRUXiOaHzK2kSgZGm3fokrYnGRRBTNXBmxrt7w%3D';
+        'https://$_accountName.blob.core.windows.net/$_containerName';
+  }
+
+  String _getUrlWithSasToken(String baseUrl) {
+    return '$baseUrl?$_sasToken';
   }
 
   Future<String> uploadFile(
@@ -28,8 +32,41 @@ class AzureBlobService {
           ? 'private/$category/$fileName'
           : '$category/$fileName';
 
-      final Uri url = Uri.parse('$_baseUrl/$blobPath');
+      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
       final List<int> fileBytes = await file.readAsBytes();
+      final http.Response response = await http.put(
+        url,
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'Content-Type': _getContentType(fileName),
+        },
+        body: fileBytes,
+      );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Return the blob URL
+        return 'https://$_accountName.blob.core.windows.net/$_containerName/$blobPath';
+      } else {
+        throw Exception(
+          'Failed to upload file: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to upload file: $e');
+    }
+  }
+
+  Future<String> uploadFileFromBytes(
+    List<int> fileBytes,
+    String fileName,
+    String category,
+    bool isPrivate,
+  ) async {
+    try {
+      final String blobPath = isPrivate
+          ? 'private/$category/$fileName'
+          : '$category/$fileName';
+
+      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
       final http.Response response = await http.put(
         url,
         headers: {
@@ -53,7 +90,7 @@ class AzureBlobService {
 
   Future<List<int>> downloadFile(String blobPath) async {
     try {
-      final Uri url = Uri.parse('$_baseUrl/$blobPath');
+      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
       final http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         return response.bodyBytes;
@@ -69,7 +106,7 @@ class AzureBlobService {
 
   Future<void> deleteFile(String blobPath) async {
     try {
-      final Uri url = Uri.parse('$_baseUrl/$blobPath');
+      final Uri url = Uri.parse(_getUrlWithSasToken('$_baseUrl/$blobPath'));
 
       final http.Response response = await http.delete(url);
 
@@ -91,7 +128,7 @@ class AzureBlobService {
   Future<List<FileItem>> listFiles(String category) async {
     try {
       final List<FileItem> files = [];
-      final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
+      final Uri url = Uri.parse('${_getUrlWithSasToken(_baseUrl)}&restype=container&comp=list');
 
       final http.Response response = await http.get(url);
 
@@ -148,7 +185,7 @@ class AzureBlobService {
       int totalFiles = 0;
       int totalSize = 0;
 
-      final Uri url = Uri.parse('$_baseUrl&restype=container&comp=list');
+      final Uri url = Uri.parse('${_getUrlWithSasToken(_baseUrl)}&restype=container&comp=list');
 
       final http.Response response = await http.get(url);
 
@@ -211,7 +248,7 @@ class AzureBlobService {
 
   Future<Map<String, dynamic>> _getBlobProperties(String blobName) async {
     try {
-      final Uri url = Uri.parse('$_baseUrl/$blobName&comp=properties');
+      final Uri url = Uri.parse('${_getUrlWithSasToken('$_baseUrl/$blobName')}&comp=properties');
       final http.Response response = await http.head(url);
       if (response.statusCode == 200) {
         return {

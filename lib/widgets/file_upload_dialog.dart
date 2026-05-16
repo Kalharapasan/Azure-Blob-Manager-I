@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/file_provider.dart';
@@ -78,15 +79,26 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
     });
 
     try {
-      final file = File(_pickedFile!.path!);
       final String fileName = _fileNameController.text;
       final String category = _selectedCategory!;
       final bool isPrivate = _isPrivate;
+      final String url;
 
-      final String url = await Provider.of<FileProvider>(
-        context,
-        listen: false,
-      ).uploadFile(file, fileName, category, isPrivate);
+      if (kIsWeb) {
+        // For web, use bytes from PlatformFile
+        final List<int> fileBytes = _pickedFile!.bytes!;
+        url = await Provider.of<FileProvider>(
+          context,
+          listen: false,
+        ).uploadFileFromBytes(fileBytes, fileName, category, isPrivate);
+      } else {
+        // For mobile/desktop, use File path
+        final file = File(_pickedFile!.path!);
+        url = await Provider.of<FileProvider>(
+          context,
+          listen: false,
+        ).uploadFile(file, fileName, category, isPrivate);
+      }
 
       if (mounted) {
         Navigator.of(context).pop();

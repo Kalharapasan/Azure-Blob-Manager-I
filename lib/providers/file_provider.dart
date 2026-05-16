@@ -58,6 +58,34 @@ class FileProvider extends ChangeNotifier {
     }
   }
 
+  Future<String> uploadFileFromBytes(
+    List<int> fileBytes,
+    String fileName,
+    String category,
+    bool isPrivate,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final String url = await _azureBlobService.uploadFileFromBytes(
+        fileBytes,
+        fileName,
+        category,
+        isPrivate,
+      );
+      await loadFiles(category);
+      return url;
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> deleteFile(String blobPath, String category) async {
     _isLoading = true;
     _error = null;
