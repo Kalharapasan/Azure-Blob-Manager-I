@@ -34,9 +34,6 @@ class PrivateFileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
-    final privateFiles = fileProvider.files
-        .where((file) => file.isPrivate)
-        .toList();
 
     if (fileProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -45,6 +42,10 @@ class PrivateFileList extends StatelessWidget {
     if (fileProvider.error != null) {
       return Center(child: Text('Error: ${fileProvider.error}'));
     }
+
+    final privateFiles = fileProvider.files
+        .where((file) => file.isPrivate)
+        .toList();
 
     if (privateFiles.isEmpty) {
       return const Center(child: Text('No private files found'));
@@ -63,10 +64,7 @@ class PrivateFileList extends StatelessWidget {
 class PrivateFileItemWidget extends StatelessWidget {
   final FileItem file;
 
-  const PrivateFileItemWidget({
-    Key? key,
-    required this.file,
-  }) : super(key: key);
+  const PrivateFileItemWidget({Key? key, required this.file}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -165,13 +163,14 @@ class PrivateFileItemWidget extends StatelessWidget {
     try {
       final fileProvider = Provider.of<FileProvider>(context, listen: false);
       await fileProvider.downloadFile('${file.category}/${file.name}');
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File downloaded successfully')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to download file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to download file: $e')));
     }
   }
 
@@ -180,9 +179,7 @@ class PrivateFileItemWidget extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(file.name),
-        content: SingleChildScrollView(
-          child: _getFilePreview(file),
-        ),
+        content: SingleChildScrollView(child: _getFilePreview(file)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -198,14 +195,19 @@ class PrivateFileItemWidget extends StatelessWidget {
       case 'image':
         return Image.network(file.url);
       case 'video':
-        return const Text('Video preview not available in dialog. Tap to download and play.');
+        return const Text(
+          'Video preview not available in dialog. Tap to download and play.',
+        );
       case 'music':
-        return const Text('Audio preview not available in dialog. Tap to download and play.');
+        return const Text(
+          'Audio preview not available in dialog. Tap to download and play.',
+        );
       case 'document':
-        return const Text('Document preview not available. Tap to download and open.');
+        return const Text(
+          'Document preview not available. Tap to download and open.',
+        );
       default:
         return const Text('Preview not available for this file type.');
     }
   }
-
 }
