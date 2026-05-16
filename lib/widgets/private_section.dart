@@ -27,3 +27,12 @@ class PrivateSection extends StatelessWidget {
     );
   }
 }
+
+class PrivateFileList extends StatelessWidget {
+  const PrivateFileList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
