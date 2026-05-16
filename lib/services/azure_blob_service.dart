@@ -216,8 +216,8 @@ class AzureBlobService {
 
               final FileItem fileItem = FileItem(
                 name: fileName,
-                url:
-                    'https://$_accountName.blob.core.windows.net/$_containerName/$blobName',
+                blobName: blobName,
+                url: _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobName').toString(),
                 size: contentLength,
                 category: fileCategory,
                 uploadedAt: lastModified,

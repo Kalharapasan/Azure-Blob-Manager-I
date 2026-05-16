@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/file_provider.dart';
 import '../models/file_item.dart';
 
@@ -408,7 +410,7 @@ class _FileActions extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       try {
         await Provider.of<FileProvider>(context, listen: false)
-            .deleteFile('${file.category}/${file.name}', file.category);
+            .deleteFile(file.blobName, file.category);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File deleted')),
         );
@@ -421,14 +423,34 @@ class _FileActions extends StatelessWidget {
 
   Future<void> _download(BuildContext context) async {
     try {
-      await Provider.of<FileProvider>(context, listen: false)
-          .downloadFile('${file.category}/${file.name}');
+      // Show loading snackbar
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Downloaded successfully')),
+        const SnackBar(content: Text('Downloading...'), duration: Duration(seconds: 1)),
       );
+
+      final bytes = await Provider.of<FileProvider>(context, listen: false)
+          .downloadFile(file.blobName);
+      
+      // Request user to select a location to save the file
+      String? outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save File',
+        fileName: file.name,
+      );
+
+      if (outputPath != null) {
+        final outputFile = File(outputPath);
+        await outputFile.writeAsBytes(bytes);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File saved successfully')),
+          );
+        }
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      }
     }
   }
 

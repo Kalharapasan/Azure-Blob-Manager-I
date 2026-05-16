@@ -1,5 +1,6 @@
 class FileItem {
   final String name;
+  final String blobName;
   final String url;
   final int size;
   final String category;
@@ -8,6 +9,7 @@ class FileItem {
 
   FileItem({
     required this.name,
+    required this.blobName,
     required this.url,
     required this.size,
     required this.category,
@@ -18,6 +20,7 @@ class FileItem {
   factory FileItem.fromJson(Map<String, dynamic> json) {
     return FileItem(
       name: json['name'] as String,
+      blobName: json['blobName'] as String,
       url: json['url'] as String,
       size: json['size'] as int,
       category: json['category'] as String,
@@ -29,6 +32,7 @@ class FileItem {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'blobName': blobName,
       'url': url,
       'size': size,
       'category': category,

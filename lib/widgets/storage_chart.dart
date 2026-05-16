@@ -95,7 +95,7 @@ class _StorageChartState extends State<StorageChart> {
     String centerLabel = totalFiles.toString();
     String centerSub = 'files';
 
-    if (_touchedIndex != null && _touchedIndex! < entries.length) {
+    if (_touchedIndex != null && _touchedIndex! >= 0 && _touchedIndex! < entries.length) {
       final cat = entries[_touchedIndex!].key;
       final sz = entries[_touchedIndex!].value;
       centerLabel = _formatSize(sz);
@@ -130,8 +130,8 @@ class _StorageChartState extends State<StorageChart> {
                         _touchedIndex = null;
                         return;
                       }
-                      _touchedIndex =
-                          response.touchedSection!.touchedSectionIndex;
+                      final index = response.touchedSection!.touchedSectionIndex;
+                      _touchedIndex = index >= 0 ? index : null;
                     });
                   },
                 ),
