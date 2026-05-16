@@ -2,6 +2,9 @@
 
 A lightweight Flutter app to browse, upload, and manage files stored in Azure Blob Storage.
 
+## Screenshots
+
+
 **Features**
 - Browse containers and file lists
 - Upload and delete files
@@ -226,30 +229,3 @@ cd ..
 # Install an APK to a connected device
 adb install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
-
-## Screenshots
-
-Include screenshots in `assets/docs/` and reference them here for quick visual context. Recommended sizes: 1080x1920 (mobile) or 1280x720 (landscape). Optimize images to keep the repo small.
-
-Example structure:
-
-```
-assets/docs/screenshot-1.svg
-assets/docs/screenshot-2.svg
-```
-
-How to capture screenshots from a connected Android device:
-
-```bash
-# Capture screenshot and pull to host
-adb shell screencap -p /sdcard/screen.png
-adb pull /sdcard/screen.png assets/docs/screenshot-1.png
-```
-
-Add the images to the repo and commit. Reference images in this README like:
-
-![Dashboard](assets/docs/screenshot-1.svg)
-
-If you want, I can add placeholder images and an example `assets/docs` README gallery — tell me and I'll create them.
-
-
