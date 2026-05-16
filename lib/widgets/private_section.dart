@@ -60,9 +60,7 @@ class PrivateFileList extends StatelessWidget {
   }
 }
 
-
 class PrivateFileItemWidget extends StatelessWidget {
-
   final FileItem file;
 
   const PrivateFileItemWidget({super.key});
@@ -73,8 +71,17 @@ class PrivateFileItemWidget extends StatelessWidget {
   }
 
   Widget _getFileIcon(String category) {
-    switch (category) {}
+    switch (category) {
+      case 'video':
+        return const Icon(Icons.videocam, color: Colors.red);
+      case 'image':
+        return const Icon(Icons.image, color: Colors.blue);
+      case 'music':
+        return const Icon(Icons.music_note, color: Colors.green);
+      case 'document':
+        return const Icon(Icons.description, color: Colors.orange);
+      default:
+        return const Icon(Icons.file_present, color: Colors.grey);
+    }
   }
-
-
 }
