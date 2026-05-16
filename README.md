@@ -85,51 +85,46 @@ Key goals:
 
 ## Project Structure
 
-The important files and folders for quick navigation and maintenance:
+The important files and folders for quick navigation and maintenance (ASCII tree):
 
 ```
-pubspec.yaml             # Dart/Flutter dependencies & assets
-README.md                # This file
-LICENSE                  # Project license
-.env.example             # Example environment variables (do not commit secrets)
-
-android/                 # Android platform project (Gradle wrapper included)
-	gradle/                # Gradle tooling files
-	app/                   # Android app module (native Gradle files)
-	gradlew                # Gradle wrapper (UNIX)
-	gradlew.bat            # Gradle wrapper (Windows)
-	local.properties       # (machine-specific) Android SDK path and local settings
-
-ios/                     # iOS platform project (Xcode workspace and project files)
-
-lib/                     # Main Dart source
-	main.dart              # App entrypoint (registers providers, routes)
-	config/                # App configuration helpers
-		app_config.dart
-	models/                # Data classes representing blobs and categories
-		file_category.dart
-		file_item.dart
-	providers/             # State management (Provider pattern)
-		file_provider.dart
-	services/              # Integration with Azure SDK / REST APIs
-		azure_blob_service.dart
-	screens/               # Screen widgets (pages)
-		dashboard_screen.dart
-	widgets/               # Reusable UI components
-		category_sidebar.dart
-		file_list.dart
-		file_upload_dialog.dart
-		private_section.dart
-		storage_chart.dart
-
-assets/                  # Static assets (icons, images, documentation screenshots)
-	icons/
-	docs/
-
-test/                    # Unit & widget tests
-	widget_test.dart
-
-build/                   # Generated build artifacts (ignored by VCS)
+.
+├─ pubspec.yaml
+├─ README.md
+├─ LICENSE
+├─ .env.example
+├─ android/
+│  ├─ gradle/
+│  ├─ app/
+│  ├─ gradlew
+│  ├─ gradlew.bat
+│  └─ local.properties
+├─ ios/
+├─ lib/
+│  ├─ main.dart
+│  ├─ config/
+│  │  └─ app_config.dart
+│  ├─ models/
+│  │  ├─ file_category.dart
+│  │  └─ file_item.dart
+│  ├─ providers/
+│  │  └─ file_provider.dart
+│  ├─ services/
+│  │  └─ azure_blob_service.dart
+│  ├─ screens/
+│  │  └─ dashboard_screen.dart
+│  └─ widgets/
+│     ├─ category_sidebar.dart
+│     ├─ file_list.dart
+│     ├─ file_upload_dialog.dart
+│     ├─ private_section.dart
+│     └─ storage_chart.dart
+├─ assets/
+│  ├─ icons/
+│  └─ docs/
+├─ test/
+│  └─ widget_test.dart
+└─ build/
 
 ```
 
