@@ -34,12 +34,15 @@ class AppColors {
   static const textPrimary = Colors.white;
   static const textSecondary = Color(0xFF94A3B8);
 
+  static const music = Color(0xFFFACC15);
+  static const document = Color(0xFF4ADE80);
+
   static Color categoryColor(String category) {
     switch (category.toLowerCase()) {
       case 'image':    return const Color(0xFF38BDF8);
       case 'video':    return const Color(0xFFF472B6);
-      case 'music':    return const Color(0xFFFACC15);
-      case 'document': return const Color(0xFF4ADE80);
+      case 'music':    return music;
+      case 'document': return document;
       case 'private':  return const Color(0xFFA78BFA);
       default:         return const Color(0xFF94A3B8);
     }
@@ -1008,7 +1011,7 @@ class _FileActionsMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: isSmall ? 18 : 22),
       color: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: AppColors.border)),
       itemBuilder: (context) => [
         _buildItem('preview', 'Preview', Icons.visibility_outlined),
         _buildItem('download', 'Download', Icons.file_download_outlined),
@@ -1175,9 +1178,4 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ─── Custom Colors for Categories ───────────────────────────────────────────
 
-extension AppColorsExt on AppColors {
-  static const music = Color(0xFFFACC15);
-  static const document = Color(0xFF4ADE80);
-}
