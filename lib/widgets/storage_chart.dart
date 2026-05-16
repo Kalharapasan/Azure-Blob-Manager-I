@@ -229,7 +229,7 @@ class _LegendItem extends StatelessWidget {
         ),
         const SizedBox(width: 5),
         Text(
-          '${label[0].toUpperCase()}${label.substring(1)} ${pct.toStringAsFixed(0)}%',
+          '${label.isEmpty ? "Other" : label[0].toUpperCase()}${label.length > 1 ? label.substring(1) : ""} ${pct.toStringAsFixed(0)}%',
           style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.55)),
         ),
       ],

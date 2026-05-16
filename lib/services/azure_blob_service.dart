@@ -60,7 +60,7 @@ class AzureBlobService {
           ? 'private/$category/$fileName'
           : '$category/$fileName';
 
-      final Uri url = _buildUrl('$_baseUrl/$blobPath');
+      final Uri url = _buildUrl(blobPath: blobPath);
       final List<int> fileBytes = await file.readAsBytes();
       final http.Response response = await http.put(
         url,
@@ -72,7 +72,7 @@ class AzureBlobService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Return the blob URL
-        return _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobPath').toString();
+        return _buildUrl(blobPath: blobPath).toString();
       } else {
         throw Exception(
           'Failed to upload file: ${response.statusCode} - ${response.body}',
@@ -94,7 +94,7 @@ class AzureBlobService {
           ? 'private/$category/$fileName'
           : '$category/$fileName';
 
-      final Uri url = _buildUrl('$_baseUrl/$blobPath');
+      final Uri url = _buildUrl(blobPath: blobPath);
       final http.Response response = await http.put(
         url,
         headers: {
@@ -105,7 +105,7 @@ class AzureBlobService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Return the blob URL
-        return _buildUrl('https://$_accountName.blob.core.windows.net/$_containerName/$blobPath').toString();
+        return _buildUrl(blobPath: blobPath).toString();
       } else {
         throw Exception(
           'Failed to upload file: ${response.statusCode} - ${response.body}',
@@ -134,7 +134,7 @@ class AzureBlobService {
 
   Future<void> deleteFile(String blobPath) async {
     try {
-      final Uri url = _buildUrl('$_baseUrl/$blobPath');
+      final Uri url = _buildUrl(blobPath: blobPath);
 
       final http.Response response = await http.delete(url);
 
@@ -156,7 +156,7 @@ class AzureBlobService {
   Future<List<FileItem>> listFiles(String category) async {
     try {
       final List<FileItem> files = [];
-      final Uri url = _buildUrl(_baseUrl, {
+      final Uri url = _buildUrl(extraQuery: {
         'restype': 'container',
         'comp': 'list',
       });
@@ -250,7 +250,7 @@ class AzureBlobService {
       int totalFiles = 0;
       int totalSize = 0;
 
-      final Uri url = _buildUrl(_baseUrl, {
+      final Uri url = _buildUrl(extraQuery: {
         'restype': 'container',
         'comp': 'list',
       });
