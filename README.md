@@ -85,41 +85,58 @@ Key goals:
 
 ## Project Structure
 
-Top-level layout (important folders/files):
+The important files and folders for quick navigation and maintenance:
 
 ```
-lib/
-	main.dart                 # App entrypoint
+pubspec.yaml                # Dart/Flutter dependencies & assets
+README.md                   # This file
+LICENSE                     # Project license
+.env.example                # Example environment variables (do not commit secrets)
+
+android/                    # Android platform project (Gradle wrapper included)
+	gradle/                   # Gradle tooling files
+	app/                      # Android app module (native Gradle files)
+	gradlew, gradlew.bat      # Gradle wrapper (use these for Android build tasks)
+	local.properties          # (machine-specific) Android SDK path and local settings
+
+ios/                        # iOS platform project (Xcode workspace and project files)
+
+lib/                        # Main Dart source
+	main.dart                 # App entrypoint (registers providers, routes)
 	config/
-		app_config.dart         # App configuration helpers
-	models/
+		app_config.dart         # Loads config from env / local settings; centralizes keys
+	models/                   # Data classes representing blobs and categories
 		file_category.dart
 		file_item.dart
-	providers/
+	providers/                # State management (Provider pattern)
 		file_provider.dart
-	screens/
+	services/                 # Integration with Azure SDK / REST APIs
+		azure_blob_service.dart  # Upload/download/list/delete implementation
+	screens/                  # Screen widgets (pages)
 		dashboard_screen.dart
-	services/
-		azure_blob_service.dart
-	widgets/
+	widgets/                  # Reusable UI components
 		category_sidebar.dart
 		file_list.dart
 		file_upload_dialog.dart
 		private_section.dart
 		storage_chart.dart
-android/
-	build.gradle.kts
-	app/
-		build.gradle.kts
-ios/
-	Runner/
-web/
-	index.html
-test/
+
+assets/                     # Static assets (icons, images, documentation screenshots)
+	icons/
+	docs/
+
+test/                       # Unit & widget tests
 	widget_test.dart
-README.md
-LICENSE
+
+build/                      # Generated build artifacts (ignored by VCS)
+
 ```
+
+Notes:
+- Use `lib/config/app_config.dart` to change how environment variables are loaded (SAS tokens, account keys).
+- To change the Android NDK version, edit `android/app/build.gradle.kts` and update `ndkVersion` or rely on the Gradle plugin to download the configured side-by-side NDK.
+- Keep secrets out of the repo: use `.env` locally (not committed) or CI secret storage.
+
 
 ## Configuration & Environment
 
