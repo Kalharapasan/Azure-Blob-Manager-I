@@ -16,6 +16,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
+  String _selectedCategory = 'image';
+  bool _showPrivate = false;
+  final TextEditingController _passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
