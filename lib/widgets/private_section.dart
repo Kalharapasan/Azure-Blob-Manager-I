@@ -103,5 +103,10 @@ class PrivateFileItemWidget extends StatelessWidget {
         ],
       ),
     );
+
+    if (confirmed == true) {
+      
+    }
+
   }
 }
