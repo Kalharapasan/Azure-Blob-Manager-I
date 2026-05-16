@@ -1,0 +1,9 @@
+# Azure Storage Configuration
+AZURE_STORAGE_ACCOUNT=azureblobmanager1
+AZURE_STORAGE_CONTAINER=azureblobmanager
+AZURE_STORAGE_URL=https://azureblobmanager1.blob.core.windows.net/azureblobmanager?sp=racwdli&st=2026-05-16T09:29:05Z&se=2026-05-16T17:44:05Z&sv=2025-11-05&sr=c&sig=4KyYLBBfzvHY9ifKjfXPLXxw2lnxLArIQLJXQcG%2Bw%2FY%3D
+AZURE_SAS_TOKEN=sp=racwdli&st=2026-05-16T09:29:05Z&se=2026-05-16T17:44:05Z&sv=2025-11-05&sr=c&sig=4KyYLBBfzvHY9ifKjfXPLXxw2lnxLArIQLJXQcG%2Bw%2FY%3D
+
+# App Configuration
+APP_NAME=Azure Blob Manager
+PRIVATE_SECTION_PASSWORD=Pasa2001#

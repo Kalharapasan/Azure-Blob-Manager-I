@@ -15,6 +15,10 @@ class AppConfig {
       dotenv.env['PRIVATE_SECTION_PASSWORD'] ?? '';
 
   static Future<void> load() async {
-    await dotenv.load(fileName: ".env");
+    try {
+      await dotenv.load(fileName: "assets/env/app_env");
+    } catch (_) {
+      await dotenv.load(fileName: ".env");
+    }
   }
 }

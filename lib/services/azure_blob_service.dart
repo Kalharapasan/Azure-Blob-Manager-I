@@ -30,14 +30,19 @@ class AzureBlobService {
   }
 
   Uri _buildUrl(String baseUrl, [Map<String, String> extraQuery = const {}]) {
-    final Uri base = Uri.parse(baseUrl);
-    final Uri sas = Uri(query: _sasToken);
-    final Map<String, String> query = {
-      ...base.queryParameters,
-      ...sas.queryParameters,
-      ...extraQuery,
-    };
-    return base.replace(queryParameters: query);
+    final String sanitizedBase = baseUrl.split('?').first;
+    final StringBuffer query = StringBuffer(_sasToken);
+
+    if (extraQuery.isNotEmpty) {
+      for (final MapEntry<String, String> entry in extraQuery.entries) {
+        if (query.isNotEmpty) {
+          query.write('&');
+        }
+        query.write('${Uri.encodeQueryComponent(entry.key)}=${Uri.encodeQueryComponent(entry.value)}');
+      }
+    }
+
+    return Uri.parse('$sanitizedBase?${query.toString()}');
   }
 
   Future<String> uploadFile(
