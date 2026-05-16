@@ -47,7 +47,6 @@ class FileProvider extends ChangeNotifier {
         category,
         isPrivate,
       );
-      // Reload all files so every category view is up-to-date
       await loadFiles('all');
       return url;
     } catch (e) {
@@ -76,7 +75,6 @@ class FileProvider extends ChangeNotifier {
         category,
         isPrivate,
       );
-      // Reload all files so every category view is up-to-date
       await loadFiles('all');
       return url;
     } catch (e) {
@@ -95,7 +93,6 @@ class FileProvider extends ChangeNotifier {
 
     try {
       await _azureBlobService.deleteFile(blobPath);
-      // Reload all files so every category view is up-to-date
       await loadFiles('all');
     } catch (e) {
       _error = e.toString();

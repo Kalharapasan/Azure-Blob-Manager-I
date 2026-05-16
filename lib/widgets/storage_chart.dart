@@ -17,6 +17,7 @@ class _StorageChartState extends State<StorageChart> {
   Widget build(BuildContext context) {
     final fileProvider = Provider.of<FileProvider>(context);
     final cs = Theme.of(context).colorScheme;
+    final isMobile = MediaQuery.of(context).size.width < 700;
 
     if (fileProvider.isLoading) {
       return const Center(
@@ -35,11 +36,11 @@ class _StorageChartState extends State<StorageChart> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.pie_chart_outline_rounded,
-                size: 32, color: cs.onSurface.withOpacity(0.2)),
-            const SizedBox(height: 8),
+                size: 28, color: cs.onSurface.withOpacity(0.2)),
+            const SizedBox(height: 6),
             Text('No data',
                 style: TextStyle(
-                    color: cs.onSurface.withOpacity(0.35), fontSize: 12)),
+                    color: cs.onSurface.withOpacity(0.35), fontSize: 11)),
           ],
         ),
       );
@@ -78,11 +79,13 @@ class _StorageChartState extends State<StorageChart> {
       sections.add(PieChartSectionData(
         value: sz.toDouble(),
         title: isTouched ? '${pct.toStringAsFixed(1)}%' : '',
-        radius: isTouched ? 52 : 44,
+        radius: isMobile
+            ? (isTouched ? 38 : 32)
+            : (isTouched ? 52 : 44),
         color: color,
         titleStyle: const TextStyle(
           color: Colors.white,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
         borderSide: isTouched
@@ -91,16 +94,142 @@ class _StorageChartState extends State<StorageChart> {
       ));
     }
 
-    String centerLabel = totalFiles.toString();
-    String centerSub = 'files';
-
-    if (_touchedIndex != null && _touchedIndex! >= 0 && _touchedIndex! < entries.length) {
-      final cat = entries[_touchedIndex!].key;
-      final sz = entries[_touchedIndex!].value;
-      centerLabel = _formatSize(sz);
-      centerSub = cat;
+    if (isMobile) {
+      return _buildMobileChart(context, cs, entries, sections, categoryColors, totalSize, totalFiles);
+    } else {
+      return _buildWideChart(context, cs, entries, sections, categoryColors, totalSize, totalFiles);
     }
+  }
 
+  // ── Mobile: horizontal compact layout ────────────────────────────────────
+  Widget _buildMobileChart(
+    BuildContext context,
+    ColorScheme cs,
+    List<MapEntry<String, int>> entries,
+    List<PieChartSectionData> sections,
+    Map<String, Color> categoryColors,
+    int totalSize,
+    int totalFiles,
+  ) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131326).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2A2A45), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          // Compact pie chart
+          SizedBox(
+            width: 100,
+            height: 100,
+            child: PieChart(
+              PieChartData(
+                sections: sections,
+                centerSpaceRadius: 24,
+                sectionsSpace: 2,
+                pieTouchData: PieTouchData(
+                  touchCallback: (event, response) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          response == null ||
+                          response.touchedSection == null) {
+                        _touchedIndex = null;
+                        return;
+                      }
+                      final index = response.touchedSection!.touchedSectionIndex;
+                      _touchedIndex = index >= 0 ? index : null;
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Stats
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Storage Usage',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_formatSize(totalSize)} · $totalFiles files',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: cs.onSurface.withOpacity(0.4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Legend compact
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: entries.map((e) {
+                    final color = categoryColors[e.key] ?? const Color(0xFF6C63FF);
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6, height: 6,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _capitalize(e.key),
+                          style: TextStyle(fontSize: 10, color: cs.onSurface.withOpacity(0.5)),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          // Summary column
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _MiniStatCard(
+                icon: Icons.insert_drive_file_rounded,
+                value: '$totalFiles',
+                label: 'Files',
+                color: cs.primary,
+              ),
+              const SizedBox(height: 8),
+              _MiniStatCard(
+                icon: Icons.data_usage_rounded,
+                value: _formatSize(totalSize),
+                label: 'Size',
+                color: cs.secondary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Wide: original layout ─────────────────────────────────────────────────
+  Widget _buildWideChart(
+    BuildContext context,
+    ColorScheme cs,
+    List<MapEntry<String, int>> entries,
+    List<PieChartSectionData> sections,
+    Map<String, Color> categoryColors,
+    int totalSize,
+    int totalFiles,
+  ) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(20),
@@ -118,10 +247,8 @@ class _StorageChartState extends State<StorageChart> {
       ),
       child: Row(
         children: [
-          // Pie chart
           SizedBox(
-            width: 140,
-            height: 140,
+            width: 140, height: 140,
             child: PieChart(
               PieChartData(
                 sections: sections,
@@ -145,7 +272,6 @@ class _StorageChartState extends State<StorageChart> {
             ),
           ),
           const SizedBox(width: 20),
-          // Legend + stats
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -153,19 +279,12 @@ class _StorageChartState extends State<StorageChart> {
               children: [
                 Text(
                   'Storage Usage',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${_formatSize(totalSize)} total · $totalFiles files',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: cs.onSurface.withOpacity(0.4),
-                  ),
+                  style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.4)),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -174,17 +293,25 @@ class _StorageChartState extends State<StorageChart> {
                   children: entries.map((e) {
                     final color = categoryColors[e.key] ?? const Color(0xFF6C63FF);
                     final pct = totalSize > 0 ? (e.value / totalSize * 100) : 0.0;
-                    return _LegendItem(
-                      color: color,
-                      label: e.key,
-                      pct: pct,
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8, height: 8,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${_capitalize(e.key)} ${pct.toStringAsFixed(0)}%',
+                          style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.55)),
+                        ),
+                      ],
                     );
                   }).toList(),
                 ),
               ],
             ),
           ),
-          // Summary cards
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -213,35 +340,63 @@ class _StorageChartState extends State<StorageChart> {
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(2)}MB';
   }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-  final double pct;
+// ── Mini stat card for mobile ─────────────────────────────────────────────────
 
-  const _LegendItem({required this.color, required this.label, required this.pct});
+class _MiniStatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _MiniStatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          '${label.isEmpty ? "Other" : label[0].toUpperCase()}${label.length > 1 ? label.substring(1) : ""} ${pct.toStringAsFixed(0)}%',
-          style: TextStyle(fontSize: 11, color: cs.onSurface.withOpacity(0.55)),
-        ),
-      ],
+    return Container(
+      width: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.white38,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+// ── Stat card for wide ────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final IconData icon;

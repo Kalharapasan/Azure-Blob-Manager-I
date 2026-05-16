@@ -43,9 +43,8 @@ class PrivateFileList extends StatelessWidget {
       return Center(child: Text('Error: ${fileProvider.error}'));
     }
 
-    final privateFiles = fileProvider.files
-        .where((file) => file.isPrivate)
-        .toList();
+    final privateFiles =
+        fileProvider.files.where((file) => file.isPrivate).toList();
 
     if (privateFiles.isEmpty) {
       return const Center(child: Text('No private files found'));
@@ -152,9 +151,9 @@ class PrivateFileItemWidget extends StatelessWidget {
           const SnackBar(content: Text('File deleted successfully')),
         );
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete file: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete file: $e')),
+        );
       }
     }
   }
@@ -163,14 +162,13 @@ class PrivateFileItemWidget extends StatelessWidget {
     try {
       final fileProvider = Provider.of<FileProvider>(context, listen: false);
       await fileProvider.downloadFile('${file.category}/${file.name}');
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File downloaded successfully')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to download file: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to download file: $e')),
+      );
     }
   }
 

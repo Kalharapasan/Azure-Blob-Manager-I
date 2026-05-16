@@ -124,10 +124,18 @@ class _FileUploadDialogState extends State<FileUploadDialog>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: isMobile
+          ? const EdgeInsets.symmetric(horizontal: 12, vertical: 24)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: Container(
         width: 460,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(24),
@@ -140,10 +148,11 @@ class _FileUploadDialogState extends State<FileUploadDialog>
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
@@ -503,7 +512,8 @@ class _FileUploadDialogState extends State<FileUploadDialog>
               ),
             ),
           ],
-        ),
+          ),  // Column
+        ),  // SingleChildScrollView
       ),
     );
   }

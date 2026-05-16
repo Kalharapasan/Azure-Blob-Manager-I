@@ -23,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   final TextEditingController _passwordController = TextEditingController();
   late AnimationController _fabAnimController;
   late Animation<double> _fabScaleAnim;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -52,6 +53,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _onCategorySelected(String category) {
+    // Close drawer on mobile after selection
+    if (_scaffoldKey.currentState?.isDrawerOpen == true) {
+      Navigator.of(context).pop();
+    }
+
     if (category == 'private') {
       _showPasswordDialog();
     } else {
@@ -60,7 +66,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         _searchQuery = '';
         _searchController.clear();
       });
-      // Always load all files; FileList filters client-side by category
       Provider.of<FileProvider>(context, listen: false).loadFiles('all');
     }
   }
@@ -79,22 +84,41 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  String get _categoryLabel {
+    switch (_selectedCategory) {
+      case 'all': return 'All Files';
+      case 'image': return 'Images';
+      case 'video': return 'Videos';
+      case 'music': return 'Music';
+      case 'document': return 'Documents';
+      case 'other': return 'Other';
+      case 'private': return 'Private';
+      default: return 'Files';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final isWide = MediaQuery.of(context).size.width > 700;
 
+    if (isWide) {
+      return _buildWideLayout();
+    } else {
+      return _buildMobileLayout();
+    }
+  }
+
+  // ── Wide Layout (tablet/desktop) ──────────────────────────────────────────
+  Widget _buildWideLayout() {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: const Color(0xFF07070F),
       body: Stack(
         children: [
-          // Decorative background elements
           Positioned(
-            top: -100,
-            right: -100,
+            top: -100, right: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 300, height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: cs.primary.withOpacity(0.05),
@@ -102,11 +126,9 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           Positioned(
-            bottom: -50,
-            left: -50,
+            bottom: -50, left: -50,
             child: Container(
-              width: 200,
-              height: 200,
+              width: 200, height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: cs.secondary.withOpacity(0.05),
@@ -115,66 +137,342 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           Row(
             children: [
-          // Sidebar
-          CategorySidebar(
-            selectedCategory: _selectedCategory,
-            onCategorySelected: _onCategorySelected,
-          ),
-          // Main
-          Expanded(
-            child: Column(
-              children: [
-                _TopBar(
-                  searchController: _searchController,
-                  isGridView: _isGridView,
-                  onSearchChanged: (q) => setState(() => _searchQuery = q),
-                  onToggleView: () => setState(() => _isGridView = !_isGridView),
-                  onRefresh: () {
-                    final p = Provider.of<FileProvider>(context, listen: false);
-                    p.loadStorageStats();
-                    p.loadFiles(_selectedCategory);
-                  },
+              CategorySidebar(
+                selectedCategory: _selectedCategory,
+                onCategorySelected: _onCategorySelected,
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    _TopBar(
+                      searchController: _searchController,
+                      isGridView: _isGridView,
+                      onSearchChanged: (q) => setState(() => _searchQuery = q),
+                      onToggleView: () => setState(() => _isGridView = !_isGridView),
+                      onRefresh: () {
+                        final p = Provider.of<FileProvider>(context, listen: false);
+                        p.loadStorageStats();
+                        p.loadFiles(_selectedCategory);
+                      },
+                    ),
+                    const SizedBox(height: 220, child: StorageChart()),
+                    const _SectionDivider(label: 'Files'),
+                    Expanded(
+                      child: FileList(
+                        category: _selectedCategory,
+                        searchQuery: _searchQuery,
+                        isGridView: _isGridView,
+                      ),
+                    ),
+                  ],
                 ),
-                // Storage chart (collapsible on narrow)
-                if (isWide)
-                  const SizedBox(
-                    height: 220,
-                    child: StorageChart(),
-                  )
-                else
-                  const SizedBox(
-                    height: 160,
-                    child: StorageChart(),
-                  ),
-                const _SectionDivider(label: 'Files'),
-                Expanded(
-                  child: FileList(
-                    category: _selectedCategory,
-                    searchQuery: _searchQuery,
-                    isGridView: _isGridView,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
-    ],
-  ),
       floatingActionButton: ScaleTransition(
         scale: _fabScaleAnim,
         child: _UploadFab(onPressed: () {
-          showDialog(
-            context: context,
-            builder: (_) => const FileUploadDialog(),
-          );
+          showDialog(context: context, builder: (_) => const FileUploadDialog());
         }),
+      ),
+    );
+  }
+
+  // ── Mobile Layout ─────────────────────────────────────────────────────────
+  Widget _buildMobileLayout() {
+    final cs = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: const Color(0xFF07070F),
+      // Drawer for category navigation
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF0D0D1A),
+        child: CategorySidebar(
+          selectedCategory: _selectedCategory,
+          onCategorySelected: _onCategorySelected,
+        ),
+      ),
+      // App Bar
+      appBar: _MobileAppBar(
+        categoryLabel: _categoryLabel,
+        isGridView: _isGridView,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+        onToggleView: () => setState(() => _isGridView = !_isGridView),
+        onRefresh: () {
+          final p = Provider.of<FileProvider>(context, listen: false);
+          p.loadStorageStats();
+          p.loadFiles(_selectedCategory);
+        },
+      ),
+      body: Stack(
+        children: [
+          // Background decorations
+          Positioned(
+            top: -80, right: -80,
+            child: Container(
+              width: 200, height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.primary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              // Search bar
+              _MobileSearchBar(
+                controller: _searchController,
+                onChanged: (q) => setState(() => _searchQuery = q),
+              ),
+              // Compact chart
+              const SizedBox(height: 150, child: StorageChart()),
+              const _SectionDivider(label: 'Files'),
+              // File list
+              Expanded(
+                child: FileList(
+                  category: _selectedCategory,
+                  searchQuery: _searchQuery,
+                  isGridView: _isGridView,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Upload FAB
+      floatingActionButton: ScaleTransition(
+        scale: _fabScaleAnim,
+        child: _UploadFab(onPressed: () {
+          showDialog(context: context, builder: (_) => const FileUploadDialog());
+        }),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // Bottom nav for categories
+      bottomNavigationBar: _MobileBottomNav(
+        selectedCategory: _selectedCategory,
+        onCategorySelected: _onCategorySelected,
       ),
     );
   }
 }
 
-// ─── Top Bar ────────────────────────────────────────────────────────────────
+// ─── Mobile AppBar ────────────────────────────────────────────────────────────
+
+class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String categoryLabel;
+  final bool isGridView;
+  final VoidCallback onMenuTap;
+  final VoidCallback onToggleView;
+  final VoidCallback onRefresh;
+
+  const _MobileAppBar({
+    required this.categoryLabel,
+    required this.isGridView,
+    required this.onMenuTap,
+    required this.onToggleView,
+    required this.onRefresh,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(64);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      height: 64 + MediaQuery.of(context).padding.top,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top,
+        left: 8,
+        right: 8,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF07070F),
+        border: Border(bottom: BorderSide(color: Color(0xFF1E1E35))),
+      ),
+      child: Row(
+        children: [
+          // Menu / hamburger
+          IconButton(
+            onPressed: onMenuTap,
+            icon: const Icon(Icons.menu_rounded, color: Colors.white70, size: 24),
+          ),
+          // App icon + title
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+              ),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: const Icon(Icons.cloud_rounded, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'BlobVault',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFE8E8F0),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Text(
+                  categoryLabel,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF5A5A80)),
+                ),
+              ],
+            ),
+          ),
+          // View toggle
+          IconButton(
+            onPressed: onToggleView,
+            icon: Icon(
+              isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+              color: Colors.white54,
+              size: 22,
+            ),
+          ),
+          IconButton(
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white54, size: 22),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Mobile Search Bar ────────────────────────────────────────────────────────
+
+class _MobileSearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  const _MobileSearchBar({required this.controller, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Container(
+        height: 42,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF2A2A45)),
+        ),
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          style: TextStyle(color: cs.onSurface, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Search files…',
+            hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.35), fontSize: 14),
+            prefixIcon: Icon(Icons.search_rounded, size: 18, color: cs.onSurface.withOpacity(0.4)),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Mobile Bottom Navigation ─────────────────────────────────────────────────
+
+class _MobileBottomNav extends StatelessWidget {
+  final String selectedCategory;
+  final ValueChanged<String> onCategorySelected;
+
+  const _MobileBottomNav({
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
+
+  static const List<_NavItem> _items = [
+    _NavItem('all', 'All', Icons.folder_rounded, Color(0xFF6C63FF)),
+    _NavItem('image', 'Images', Icons.image_rounded, Color(0xFF4ECDC4)),
+    _NavItem('video', 'Videos', Icons.play_circle_rounded, Color(0xFFFF6B9D)),
+    _NavItem('document', 'Docs', Icons.description_rounded, Color(0xFF6BCB77)),
+    _NavItem('private', 'Private', Icons.lock_rounded, Color(0xFFB8B4FF)),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 64 + MediaQuery.of(context).padding.bottom,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0D0D1A),
+        border: Border(top: BorderSide(color: Color(0xFF1E1E35), width: 1.5)),
+      ),
+      child: Row(
+        children: _items.map((item) {
+          final selected = selectedCategory == item.key;
+          final color = item.color;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onCategorySelected(item.key),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 36,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: selected ? color.withOpacity(0.18) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        item.icon,
+                        size: 20,
+                        color: selected ? color : Colors.white38,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                        color: selected ? color : Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final String key;
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _NavItem(this.key, this.label, this.icon, this.color);
+}
+
+// ─── Top Bar (wide only) ──────────────────────────────────────────────────────
 
 class _TopBar extends StatelessWidget {
   final TextEditingController searchController;
@@ -202,7 +500,6 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Title + subtitle
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -226,7 +523,6 @@ class _TopBar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 24),
-          // Search bar
           Expanded(
             child: Container(
               height: 40,
@@ -250,18 +546,13 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // View toggle
           _IconBtn(
             icon: isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
             tooltip: isGridView ? 'List view' : 'Grid view',
             onTap: onToggleView,
           ),
           const SizedBox(width: 8),
-          _IconBtn(
-            icon: Icons.refresh_rounded,
-            tooltip: 'Refresh',
-            onTap: onRefresh,
-          ),
+          _IconBtn(icon: Icons.refresh_rounded, tooltip: 'Refresh', onTap: onRefresh),
         ],
       ),
     );
@@ -284,8 +575,7 @@ class _IconBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          width: 40,
-          height: 40,
+          width: 40, height: 40,
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A2E),
             borderRadius: BorderRadius.circular(10),
@@ -298,7 +588,7 @@ class _IconBtn extends StatelessWidget {
   }
 }
 
-// ─── Section Divider ─────────────────────────────────────────────────────────
+// ─── Section Divider ──────────────────────────────────────────────────────────
 
 class _SectionDivider extends StatelessWidget {
   final String label;
@@ -308,7 +598,7 @@ class _SectionDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Text(
@@ -321,14 +611,14 @@ class _SectionDivider extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Divider(color: const Color(0xFF2A2A45), height: 1)),
+          const Expanded(child: Divider(color: Color(0xFF2A2A45), height: 1)),
         ],
       ),
     );
   }
 }
 
-// ─── Upload FAB ──────────────────────────────────────────────────────────────
+// ─── Upload FAB ───────────────────────────────────────────────────────────────
 
 class _UploadFab extends StatelessWidget {
   final VoidCallback onPressed;
@@ -381,7 +671,7 @@ class _UploadFab extends StatelessWidget {
   }
 }
 
-// ─── Private Password Dialog ─────────────────────────────────────────────────
+// ─── Private Password Dialog ──────────────────────────────────────────────────
 
 class _PrivatePasswordDialog extends StatefulWidget {
   final TextEditingController controller;
@@ -415,11 +705,18 @@ class _PrivatePasswordDialogState extends State<_PrivatePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Use full screen dialog on mobile
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: isMobile
+          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 80)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: Container(
-        width: 380,
-        padding: const EdgeInsets.all(32),
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(24),
@@ -436,8 +733,7 @@ class _PrivatePasswordDialogState extends State<_PrivatePasswordDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 56, height: 56,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [cs.primary.withOpacity(0.3), cs.tertiary.withOpacity(0.2)],
@@ -450,19 +746,14 @@ class _PrivatePasswordDialogState extends State<_PrivatePasswordDialog> {
             Text(
               'Private Section',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
+                fontSize: 20, fontWeight: FontWeight.w700, color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               'Enter your password to access protected files',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: cs.onSurface.withOpacity(0.5),
-              ),
+              style: TextStyle(fontSize: 13, color: cs.onSurface.withOpacity(0.5)),
             ),
             const SizedBox(height: 24),
             AnimatedContainer(
@@ -523,9 +814,7 @@ class _PrivatePasswordDialogState extends State<_PrivatePasswordDialog> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [cs.primary, cs.secondary],
-                      ),
+                      gradient: LinearGradient(colors: [cs.primary, cs.secondary]),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ElevatedButton(
@@ -535,11 +824,11 @@ class _PrivatePasswordDialogState extends State<_PrivatePasswordDialog> {
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Text('Unlock',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ),

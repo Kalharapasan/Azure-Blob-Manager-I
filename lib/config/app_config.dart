@@ -23,10 +23,7 @@ class AppConfig {
   static String get privateSectionPassword => _getEnv('PRIVATE_SECTION_PASSWORD');
 
   static Future<void> load() async {
-    // We try multiple common paths to be safe across different platforms and configurations
-    final List<String> pathsToTry = [
-      '.env'
-    ];
+    final List<String> pathsToTry = ['.env'];
 
     for (final path in pathsToTry) {
       try {
@@ -39,8 +36,10 @@ class AppConfig {
       }
     }
 
-    print("Warning: Failed to load environment variables from any source. "
-          "The app will use default values. "
-          "If you recently added these files, you MUST completely stop and restart the Flutter app.");
+    print(
+      'Warning: Failed to load environment variables from any source. '
+      'The app will use default values. '
+      'If you recently added these files, you MUST completely stop and restart the Flutter app.',
+    );
   }
 }
