@@ -22,6 +22,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Load initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<FileProvider>(context, listen: false).loadStorageStats();
+      Provider.of<FileProvider>(context, listen: false).loadFiles(_selectedCategory);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
