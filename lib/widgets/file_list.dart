@@ -5,9 +5,8 @@ import '../models/file_item.dart';
 
 class FileList extends StatelessWidget {
   final String category;
-  final bool showPrivate;
 
-  const FileList({super.key, required this.category, required this.showPrivate});
+  const FileList({super.key, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +21,14 @@ class FileList extends StatelessWidget {
     }
 
     List<FileItem> displayedFiles = fileProvider.files;
-    if (category != 'all') {
+    if (category == 'private') {
+      displayedFiles = displayedFiles.where((file) => file.isPrivate).toList();
+    } else if (category != 'all') {
       displayedFiles = displayedFiles
-          .where((file) => file.category == category)
+          .where((file) => file.category == category && !file.isPrivate)
           .toList();
-    }
-    if (!showPrivate) {
+    } else {
+      // 'all' - show only non-private files
       displayedFiles = displayedFiles.where((file) => !file.isPrivate).toList();
     }
 

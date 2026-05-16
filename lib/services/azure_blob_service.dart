@@ -340,7 +340,7 @@ class AzureBlobService {
   }
 
   bool isPrivateCategory(String category) {
-    return false;
+    return category == 'private';
   }
 
   String _getContentType(String fileName) {
