@@ -84,7 +84,7 @@ If you are on Windows use `del`/PowerShell `Remove-Item` and `gradlew.bat` in th
 Feel free to open issues or submit PRs. Keep changes minimal and add tests where appropriate.
 
 **License**
-This project is released under the MIT License — see `LICENSE.md` for details.
+This project is released under the MIT License — see the [LICENSE](./LICENSE) file for details.
 
 ---
 
@@ -267,7 +267,7 @@ Notes for Android development:
 
 ## License
 
-This project is released under the  License — see the [License](./LICENSE.md) file for details.
+This project is released under the MIT License — see the [LICENSE](./LICENSE) file for details.
 
 ## Sample Commands
 
