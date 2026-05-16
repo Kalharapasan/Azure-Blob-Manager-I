@@ -106,11 +106,15 @@ class PrivateFileItemWidget extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        
-      } catch (e) {
-        
-      }
+        final fileProvider = Provider.of<FileProvider>(context, listen: false);
+        await fileProvider.deleteFile(
+          '${file.category}/${file.name}',
+          file.category,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File deleted successfully')),
+        );
+      } catch (e) {}
     }
-
   }
 }
