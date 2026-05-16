@@ -18,7 +18,11 @@ class AppConfig {
     try {
       await dotenv.load(fileName: "assets/env/app_env");
     } catch (_) {
-      await dotenv.load(fileName: ".env");
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        print("Warning: Failed to load environment variables: $e\nIf you recently added the .env file, you MUST completely stop and restart the Flutter app (hot reload is not enough).");
+      }
     }
   }
 }
