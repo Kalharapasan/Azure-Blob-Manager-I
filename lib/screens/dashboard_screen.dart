@@ -7,3 +7,17 @@ import '../widgets/file_upload_dialog.dart';
 import '../widgets/storage_chart.dart';
 import '../widgets/private_section.dart';
 import '../config/app_config.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
