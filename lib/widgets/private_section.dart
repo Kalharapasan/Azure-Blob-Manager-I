@@ -121,4 +121,7 @@ class PrivateFileItemWidget extends StatelessWidget {
       }
     }
   }
+
+  Future<void> _downloadFile(BuildContext context, FileItem file) async {}
+
 }
