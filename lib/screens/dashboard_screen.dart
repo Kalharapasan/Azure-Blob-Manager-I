@@ -85,5 +85,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _showUploadDialog() {}
+  void _showUploadDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => const FileUploadDialog(),
+    );
+  }
 }
