@@ -90,7 +90,7 @@ This project is released under the MIT License — see `LICENSE.md` for details.
 
 ## Project Overview
 
-`Azure Blob Manager` is a cross-platform Flutter application that provides a simple UI for interacting with Azure Blob Storage. It is intended for small teams and personal projects that need quick file browsing, uploading, and basic analytics.
+`Azure Blob Manager` is a cross platform Flutter application that provides a simple UI for interacting with Azure Blob Storage. It is intended for small teams and personal projects that need quick file browsing, uploading, and basic analytics.
 
 Key goals:
 - Minimal, responsive UI for mobile and desktop
@@ -103,6 +103,59 @@ Key goals:
 - State & logic: Provider-based state management in `lib/providers`.
 - Services: Azure API interactions implemented in `lib/services/azure_blob_service.dart`.
 - Models: Data models in `lib/models`.
+
+## Additional Details
+
+### Detailed Features
+- Container browser: list containers and switch between them.
+- File list: paginated listing with metadata (name, size, last modified).
+- File preview: quick preview for common file types (images, text).
+- Uploads: single and multi-file uploads with progress and resumable support where possible.
+- Delete + restore: delete confirmation and soft-delete awareness if the storage account supports it.
+- Search & filter: search by filename and filter by file type or size.
+- Usage charts: basic storage usage and file counts per container.
+
+### How it works (high level)
+1. App initializes and loads configuration from `lib/config/app_config.dart` (env or CI-provided secrets).
+2. `file_provider` fetches container and blob lists via `azure_blob_service`.
+3. Uploads use a direct PUT or SDK client call; progress is streamed back to the UI component.
+4. Downloads use signed URLs or SDK streams depending on configuration.
+5. All network calls are handled asynchronously with error handling and retries for transient errors.
+
+### Azure integration details
+- Uses Azure Storage REST APIs or the Azure Storage SDK for Dart (if available). Implementation details are in `lib/services/azure_blob_service.dart`.
+- Supports using either an account key, shared access signature (SAS), or token-based auth. Prefer SAS or token-based auth in production.
+- When possible, the app requests short-lived SAS tokens from a backend service (not included) to avoid embedding permanent keys in the client.
+
+### Security
+- Do NOT commit secrets (account keys, SAS tokens) to version control. Use `.env` files locally and CI secret stores in pipelines.
+- Prefer server-side token issuance for production deployments.
+- Use HTTPS endpoints for any backend or token exchange.
+
+### Configuration examples
+Create a `.env` file at the project root with the following example values (do NOT commit):
+
+```
+AZURE_STORAGE_ACCOUNT=your_account_name
+AZURE_STORAGE_KEY=your_account_key_or_blank_if_using_sas
+AZURE_SAS_TOKEN=?sv=...
+AZURE_CONTAINER=my-container
+```
+
+`lib/config/app_config.dart` reads these variables — modify it if your environment uses a different secret mechanism.
+
+### Roadmap
+- Add background upload support and paused/resume functionality.
+- Add server-side token generator example in `examples/token-service/`.
+- Improve file previews for more formats (PDF, Office files) via embedded viewers.
+
+### Known issues
+- Large file uploads may fail on unreliable networks; consider chunked uploads or managed upload APIs.
+- Android NDK side-by-side downloads can fail if local SDK is corrupted — see Troubleshooting above.
+
+### Contact
+If you need help, open an issue on the repository or contact the maintainer at the email address in the project metadata.
+
 
 ## Project Structure
 
