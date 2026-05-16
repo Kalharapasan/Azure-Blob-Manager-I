@@ -387,7 +387,7 @@ class _FileUploadDialogState extends State<FileUploadDialog>
                           onChanged: _isUploading
                               ? null
                               : (v) => setState(() => _isPrivate = v),
-                          activeColor: const Color(0xFFB8B4FF),
+                          activeThumbColor: const Color(0xFFB8B4FF),
                         ),
                       ],
                     ),

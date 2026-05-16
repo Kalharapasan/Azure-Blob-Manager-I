@@ -57,7 +57,7 @@ class _StorageChartState extends State<StorageChart> {
       totalFiles++;
     }
 
-    final _categoryColors = {
+    final categoryColors = {
       'image': const Color(0xFF4ECDC4),
       'video': const Color(0xFFFF6B9D),
       'music': const Color(0xFFFFD93D),
@@ -73,7 +73,7 @@ class _StorageChartState extends State<StorageChart> {
       final sz = entries[i].value;
       final pct = totalSize > 0 ? (sz / totalSize) * 100 : 0.0;
       final isTouched = i == _touchedIndex;
-      final color = _categoryColors[cat] ?? const Color(0xFF6C63FF);
+      final color = categoryColors[cat] ?? const Color(0xFF6C63FF);
 
       sections.add(PieChartSectionData(
         value: sz.toDouble(),
@@ -172,7 +172,7 @@ class _StorageChartState extends State<StorageChart> {
                   spacing: 8,
                   runSpacing: 6,
                   children: entries.map((e) {
-                    final color = _categoryColors[e.key] ?? const Color(0xFF6C63FF);
+                    final color = categoryColors[e.key] ?? const Color(0xFF6C63FF);
                     final pct = totalSize > 0 ? (e.value / totalSize * 100) : 0.0;
                     return _LegendItem(
                       color: color,

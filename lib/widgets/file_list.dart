@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -12,7 +11,6 @@ import 'package:open_file/open_file.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;

@@ -69,9 +69,7 @@ class AzureBlobService {
       request.headers['x-ms-blob-type'] = 'BlockBlob';
       request.headers['Content-Type'] = _getContentType(fileName);
       request.headers['Content-Length'] = fileBytes.length.toString();
-      request.bodyBytes = fileBytes is List<int>
-          ? Uint8List.fromList(fileBytes)
-          : fileBytes as Uint8List;
+      request.bodyBytes = Uint8List.fromList(fileBytes);
 
       final streamedResponse = await client.send(request);
       final response = await http.Response.fromStream(streamedResponse);
