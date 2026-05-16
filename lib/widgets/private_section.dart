@@ -124,7 +124,8 @@ class PrivateFileItemWidget extends StatelessWidget {
 
   Future<void> _downloadFile(BuildContext context, FileItem file) async {
     try {
-      
+      final fileProvider = Provider.of<FileProvider>(context, listen: false);
+      await fileProvider.downloadFile('${file.category}/${file.name}');
     } catch (e) {
       
     }
