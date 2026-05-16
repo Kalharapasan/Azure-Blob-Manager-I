@@ -39,7 +39,12 @@ class PrivateFileList extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    
+    if (fileProvider.error != null) {
+      return Center(
+        child: Text('Error: ${fileProvider.error}'),
+      );
+    }
+
     return ListView.builder(
       itemCount: privateFiles.length,
       itemBuilder: (context, index) {
