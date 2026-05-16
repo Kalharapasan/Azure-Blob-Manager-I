@@ -25,10 +25,7 @@ class AppConfig {
   static Future<void> load() async {
     // We try multiple common paths to be safe across different platforms and configurations
     final List<String> pathsToTry = [
-      'assets/app.env',
-      'assets/env/app_env',
-      '.env',
-      'assets/.env',
+      '.env'
     ];
 
     for (final path in pathsToTry) {
