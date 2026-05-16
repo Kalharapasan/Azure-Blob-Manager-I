@@ -64,7 +64,7 @@ class PrivateFileList extends StatelessWidget {
 class PrivateFileItemWidget extends StatelessWidget {
   final FileItem file;
 
-  const PrivateFileItemWidget({Key? key, required this.file}) : super(key: key);
+  const PrivateFileItemWidget({super.key, required this.file});
 
   @override
   Widget build(BuildContext context) {

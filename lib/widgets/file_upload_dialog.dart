@@ -132,7 +132,7 @@ class _FileUploadDialogState extends State<FileUploadDialog> {
             const SizedBox(height: 16),
             // Category dropdown
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               decoration: const InputDecoration(
                 labelText: 'Category',
                 border: OutlineInputBorder(),

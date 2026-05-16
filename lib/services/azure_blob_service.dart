@@ -14,7 +14,7 @@ class AzureBlobService {
     _sasToken = AppConfig.azureSaSToken;
     _containerName = AppConfig.azureStorageContainer;
     _baseUrl =
-        'https://$_accountName.blob.core.windows.net/$_containerName?$_sasToken';
+        'https://azureblobmanager1.blob.core.windows.net/azureblobmanager?sp=r&st=2026-05-16T06:26:27Z&se=2026-05-16T14:41:27Z&sv=2025-11-05&sr=c&sig=qjr6XxRUXiOaHzK2kSgZGm3fokrYnGRRBTNXBmxrt7w%3D';
   }
 
   Future<String> uploadFile(

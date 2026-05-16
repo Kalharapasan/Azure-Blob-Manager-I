@@ -51,7 +51,7 @@ class FileProvider extends ChangeNotifier {
       return url;
     } catch (e) {
       _error = e.toString();
-      throw e;
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

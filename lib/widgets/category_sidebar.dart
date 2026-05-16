@@ -5,10 +5,10 @@ class CategorySidebar extends StatelessWidget {
   final ValueChanged<String> onCategorySelected;
 
   const CategorySidebar({
-    Key? key,
+    super.key,
     required this.selectedCategory,
     required this.onCategorySelected,
-  }) : super(key: key);
+  });
 
   static const List<String> categories = [
     'all',

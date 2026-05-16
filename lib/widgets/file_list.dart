@@ -7,8 +7,7 @@ class FileList extends StatelessWidget {
   final String category;
   final bool showPrivate;
 
-  const FileList({Key? key, required this.category, required this.showPrivate})
-    : super(key: key);
+  const FileList({super.key, required this.category, required this.showPrivate});
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +48,7 @@ class FileList extends StatelessWidget {
 class FileItemWidget extends StatelessWidget {
   final FileItem file;
 
-  const FileItemWidget({Key? key, required this.file}) : super(key: key);
+  const FileItemWidget({super.key, required this.file});
 
   @override
   Widget build(BuildContext context) {
