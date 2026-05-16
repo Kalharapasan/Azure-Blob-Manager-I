@@ -62,10 +62,17 @@ class PrivateFileList extends StatelessWidget {
 
 
 class PrivateFileItemWidget extends StatelessWidget {
+
+  final FileItem file;
+
   const PrivateFileItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
   }
+
+  Widget _getFileIcon(String category) {}
+
+  
 }
