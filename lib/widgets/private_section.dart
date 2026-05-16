@@ -59,3 +59,13 @@ class PrivateFileList extends StatelessWidget {
     );
   }
 }
+
+
+class PrivateFileItemWidget extends StatelessWidget {
+  const PrivateFileItemWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
