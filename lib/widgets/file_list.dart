@@ -436,7 +436,7 @@ class _MediaViewer extends StatefulWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Media Viewer',
-      barrierColor: Colors.black90,
+      barrierColor: Colors.black.withOpacity(0.9),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) => _MediaViewer(initialFile: file, allFiles: allFiles),
       transitionBuilder: (context, anim1, anim2, child) {
