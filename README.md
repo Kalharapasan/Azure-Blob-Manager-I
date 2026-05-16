@@ -182,4 +182,61 @@ Notes for Android development:
 
 This project is released under the MIT License — see the `LICENSE` file for details.
 
+## Sample Commands
+
+Quick commands you will use frequently while developing or debugging:
+
+```bash
+# Install dependencies
+flutter pub get
+
+# List devices
+flutter devices
+
+# Run on a specific device (use id from `flutter devices`)
+flutter run -d R9YR90F5V6Y
+
+# Build debug APK
+flutter build apk --debug
+
+# Build release APK
+flutter build apk --release
+
+# Clean build artifacts
+flutter clean
+
+# Use Gradle wrapper for Android-specific tasks (Windows example)
+cd android
+.\gradlew.bat assembleDebug
+cd ..
+
+# Install an APK to a connected device
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+## Screenshots
+
+Include screenshots in `assets/docs/` and reference them here for quick visual context. Recommended sizes: 1080x1920 (mobile) or 1280x720 (landscape). Optimize images to keep the repo small.
+
+Example structure:
+
+```
+assets/docs/screenshot-1.png
+assets/docs/screenshot-2.png
+```
+
+How to capture screenshots from a connected Android device:
+
+```bash
+# Capture screenshot and pull to host
+adb shell screencap -p /sdcard/screen.png
+adb pull /sdcard/screen.png assets/docs/screenshot-1.png
+```
+
+Add the images to the repo and commit. Reference images in this README like:
+
+![Dashboard](assets/docs/screenshot-1.png)
+
+If you want, I can add placeholder images and an example `assets/docs` README gallery — tell me and I'll create them.
+
 
