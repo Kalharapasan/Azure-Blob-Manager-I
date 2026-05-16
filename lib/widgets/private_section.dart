@@ -72,7 +72,9 @@ class PrivateFileItemWidget extends StatelessWidget {
     return const Placeholder();
   }
 
-  Widget _getFileIcon(String category) {}
+  Widget _getFileIcon(String category) {
+    switch (category) {}
+  }
 
-  
+
 }
