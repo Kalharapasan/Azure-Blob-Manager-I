@@ -105,7 +105,11 @@ class PrivateFileItemWidget extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      
+      try {
+        
+      } catch (e) {
+        
+      }
     }
 
   }
