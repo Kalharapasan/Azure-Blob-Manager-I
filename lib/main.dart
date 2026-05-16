@@ -20,6 +20,7 @@ class MyApp extends StatelessWidget {
       create: (_) => FileProvider(),
       child: MaterialApp(
         title: AppConfig.appName,
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,

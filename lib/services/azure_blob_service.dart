@@ -177,16 +177,28 @@ class AzureBlobService {
 
             if (blobName.startsWith(searchPrefix)) {
               final String fileName = blobName.substring(searchPrefix.length);
-              final Map<String, dynamic> properties = await _getBlobProperties(
-                blobName,
-              );
+              
+              final int contentLengthStart = line.indexOf('<Content-Length>');
+              final int contentLengthEnd = line.indexOf('</Content-Length>');
+              int contentLength = 0;
+              if (contentLengthStart > 0 && contentLengthEnd > contentLengthStart) {
+                contentLength = int.tryParse(line.substring(contentLengthStart + 16, contentLengthEnd)) ?? 0;
+              }
+
+              final int lastModStart = line.indexOf('<Last-Modified>');
+              final int lastModEnd = line.indexOf('</Last-Modified>');
+              DateTime lastModified = DateTime.now();
+              if (lastModStart > 0 && lastModEnd > lastModStart) {
+                lastModified = _parseDate(line.substring(lastModStart + 15, lastModEnd));
+              }
+
               final FileItem fileItem = FileItem(
                 name: fileName,
                 url:
                     'https://$_accountName.blob.core.windows.net/$_containerName/$blobName',
-                size: properties['contentLength'] ?? 0,
+                size: contentLength,
                 category: category,
-                uploadedAt: properties['lastModified'] ?? DateTime.now(),
+                uploadedAt: lastModified,
                 isPrivate: blobName.startsWith('private/'),
               );
               files.add(fileItem);
@@ -247,10 +259,12 @@ class AzureBlobService {
               categorySizes[category] = 0;
             }
 
-            final Map<String, dynamic> properties = await _getBlobProperties(
-              blobName,
-            );
-            final int contentLength = properties['contentLength'] ?? 0;
+            final int contentLengthStart = line.indexOf('<Content-Length>');
+            final int contentLengthEnd = line.indexOf('</Content-Length>');
+            int contentLength = 0;
+            if (contentLengthStart > 0 && contentLengthEnd > contentLengthStart) {
+              contentLength = int.tryParse(line.substring(contentLengthStart + 16, contentLengthEnd)) ?? 0;
+            }
 
             categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
             categorySizes[category] =

@@ -65,10 +65,23 @@ class StorageChart extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Total Size: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const Text(
+                  'Summary Usage',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Total Files: ${stats['totalFiles'] ?? 0}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  'Total Size: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           ),
         ],
