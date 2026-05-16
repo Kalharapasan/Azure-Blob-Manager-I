@@ -5,7 +5,6 @@ import '../widgets/category_sidebar.dart';
 import '../widgets/file_list.dart';
 import '../widgets/file_upload_dialog.dart';
 import '../widgets/storage_chart.dart';
-import '../widgets/private_section.dart';
 import '../config/app_config.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -18,7 +17,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
 
   String _selectedCategory = 'image';
-  bool _showPrivate = false;
   final TextEditingController _passwordController = TextEditingController();
 
   @override
@@ -83,8 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          if (_showPrivate)
-            const PrivateSection(),
+          // Private section is now shown via the sidebar as a category.
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -126,8 +123,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               if (_passwordController.text == AppConfig.privateSectionPassword) {
                 setState(() {
-                  _showPrivate = true;
+                  _selectedCategory = 'private';
                 });
+                Provider.of<FileProvider>(context, listen: false).loadFiles('private');
                 Navigator.of(context).pop();
                 _passwordController.clear();
               } else {

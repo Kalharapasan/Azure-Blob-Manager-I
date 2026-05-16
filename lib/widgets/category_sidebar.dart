@@ -17,6 +17,7 @@ class CategorySidebar extends StatelessWidget {
     'music',
     'document',
     'other',
+    'private',
   ];
 
   @override
@@ -62,6 +63,8 @@ class CategorySidebar extends StatelessWidget {
         return Icons.description;
       case 'other':
         return Icons.folder;
+      case 'private':
+        return Icons.lock;
       default:
         return Icons.file_present;
     }
