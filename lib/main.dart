@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'config/app_config.dart';
 import 'providers/file_provider.dart';
 import 'screens/dashboard_screen.dart';
@@ -27,46 +28,41 @@ class MyApp extends StatelessWidget {
   }
 
   ThemeData _buildDarkTheme() {
-    const Color primary = Color(0xFF6C63FF);
-    const Color surface = Color(0xFF0F0F1A);
-    const Color surfaceVariant = Color(0xFF1A1A2E);
-    const Color onSurface = Color(0xFFE8E8F0);
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: surface,
-      colorScheme: const ColorScheme.dark(
-        primary: primary,
-        secondary: Color(0xFF00D9FF),
-        tertiary: Color(0xFFFF6B9D),
-        surface: surface,
-        surfaceContainerHighest: surfaceVariant,
-        onSurface: onSurface,
-        onPrimary: Colors.white,
-        primaryContainer: Color(0xFF16162A),
-        onPrimaryContainer: Color(0xFFB8B4FF),
-        error: Color(0xFFFF5F7E),
+      scaffoldBackgroundColor: const Color(0xFF07070F),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6C63FF),
+        brightness: Brightness.dark,
+        primary: const Color(0xFF6C63FF),
+        secondary: const Color(0xFF4ECDC4),
+        tertiary: const Color(0xFFFF6B9D),
+        surface: const Color(0xFF0F0F1A),
+        surfaceContainerHighest: const Color(0xFF1A1A2E),
+        error: const Color(0xFFFF5F7E),
       ),
+      textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
       cardTheme: CardThemeData(
-        color: surfaceVariant,
+        color: const Color(0xFF1A1A2E),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: Color(0xFF2A2A45), width: 1),
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: surface,
-        foregroundColor: onSurface,
+        backgroundColor: Color(0xFF07070F),
         elevation: 0,
+        centerTitle: false,
         surfaceTintColor: Colors.transparent,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: surfaceVariant,
-        contentTextStyle: const TextStyle(color: onSurface),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: const Color(0xFF1A1A2E),
+        contentTextStyle: const TextStyle(color: Color(0xFFE8E8F0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         behavior: SnackBarBehavior.floating,
+        elevation: 8,
       ),
     );
   }

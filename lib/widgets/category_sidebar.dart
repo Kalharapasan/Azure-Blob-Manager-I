@@ -23,10 +23,10 @@ class CategorySidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220,
+      width: 240,
       decoration: const BoxDecoration(
         color: Color(0xFF0D0D1A),
-        border: Border(right: BorderSide(color: Color(0xFF1E1E35))),
+        border: Border(right: BorderSide(color: Color(0xFF1E1E35), width: 1.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

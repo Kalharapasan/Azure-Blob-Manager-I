@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../providers/file_provider.dart';
 import '../models/file_item.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class FileList extends StatelessWidget {
   final String category;
@@ -154,13 +155,20 @@ class _FileListCardState extends State<_FileListCard>
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
-            color: _hovered ? const Color(0xFF1E1E38) : const Color(0xFF1A1A2E),
-            borderRadius: BorderRadius.circular(14),
+            color: _hovered ? color.withOpacity(0.08) : const Color(0xFF131326),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: _hovered ? color.withOpacity(0.3) : const Color(0xFF2A2A45),
+              color: _hovered ? color.withOpacity(0.4) : const Color(0xFF2A2A45),
+              width: _hovered ? 1.5 : 1,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(color: color.withOpacity(0.08), blurRadius: 16)]
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    )
+                  ]
                 : [],
           ),
           child: Padding(
@@ -287,13 +295,20 @@ class _FileGridCardState extends State<_FileGridCard>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: _hovered ? const Color(0xFF1E1E38) : const Color(0xFF1A1A2E),
-            borderRadius: BorderRadius.circular(16),
+            color: _hovered ? color.withOpacity(0.08) : const Color(0xFF131326),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _hovered ? color.withOpacity(0.4) : const Color(0xFF2A2A45),
+              color: _hovered ? color.withOpacity(0.5) : const Color(0xFF2A2A45),
+              width: _hovered ? 1.5 : 1,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(color: color.withOpacity(0.12), blurRadius: 20)]
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.15),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    )
+                  ]
                 : [],
           ),
           child: Padding(
@@ -427,36 +442,54 @@ class _FileActions extends StatelessWidget {
   Future<void> _download(BuildContext context) async {
     try {
       if (kIsWeb) {
-        final Uri url = Uri.parse(file.url);
-        if (await canLaunchUrl(url)) {
+        try {
+          final Uri url = Uri.parse(file.url);
+          // On Web, we directly try to launch the URL as canLaunchUrl can be unreliable
           await launchUrl(url, mode: LaunchMode.externalApplication);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Download started in new tab')),
+              const SnackBar(content: Text('Opening file in new tab...')),
             );
           }
-          return;
-        } else {
-          throw 'Could not open download link';
+        } catch (e) {
+          debugPrint('Web download error: $e');
+          if (context.mounted) {
+            _showManualLinkDialog(context, file.url);
+          }
         }
+        return;
       }
 
       // Show loading snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Downloading...'), duration: Duration(seconds: 1)),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Text('Downloading ${file.name}...'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
 
       final bytes = await Provider.of<FileProvider>(context, listen: false)
           .downloadFile(file.blobName);
       
       String? outputPath;
-      // We check kIsWeb first to avoid Platform._operatingSystem crash on web
       final bool isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
       if (isDesktop) {
         try {
           outputPath = await FilePicker.platform.saveFile(
-            dialogTitle: 'Save File',
+            dialogTitle: 'Save ${file.name}',
             fileName: file.name,
           );
         } catch (e) {
@@ -464,25 +497,22 @@ class _FileActions extends StatelessWidget {
         }
       }
 
-      // If saveFile failed or we are on mobile, try getDirectoryPath
-      if (outputPath == null) {
+      // Fallback for mobile or if saveFile was cancelled/failed
+      if (outputPath == null && !kIsWeb) {
         try {
-          final directory = await FilePicker.platform.getDirectoryPath();
-          if (directory != null) {
-            outputPath = '$directory/${file.name}';
+          // On mobile, we might want to just save to downloads or documents
+          final Directory? dir = Platform.isAndroid 
+              ? Directory('/storage/emulated/0/Download')
+              : await getApplicationDocumentsDirectory();
+          
+          if (dir != null && await dir.exists()) {
+             outputPath = '${dir.path}/${file.name}';
+          } else {
+             final fallbackDir = await getApplicationDocumentsDirectory();
+             outputPath = '${fallbackDir.path}/${file.name}';
           }
         } catch (e) {
-          debugPrint('getDirectoryPath failed: $e');
-        }
-      }
-
-      // Final fallback to platform-specific storage
-      if (outputPath == null) {
-        final dir = Platform.isAndroid
-            ? await getExternalStorageDirectory()
-            : await getApplicationDocumentsDirectory();
-        if (dir != null) {
-          outputPath = '${dir.path}/${file.name}';
+          debugPrint('Path detection failed: $e');
         }
       }
 
@@ -490,17 +520,33 @@ class _FileActions extends StatelessWidget {
         final outputFile = File(outputPath);
         await outputFile.writeAsBytes(bytes);
         if (context.mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('File saved: ${outputPath.split('/').last}')),
+            SnackBar(
+              content: Text('Saved to: ${outputPath.split(RegExp(r'[/\\]')).last}'),
+              backgroundColor: const Color(0xFF4ECDC4),
+            ),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Download failed: $e')));
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download failed: $e'),
+            backgroundColor: const Color(0xFFFF5F7E),
+          ),
+        );
       }
     }
+  }
+
+  void _showManualLinkDialog(BuildContext context, String url) {
+    showDialog(
+      context: context,
+      builder: (context) => _ManualDownloadDialog(url: url),
+    );
   }
 
   void _preview(BuildContext context) {
@@ -870,6 +916,114 @@ class _EmptyState extends StatelessWidget {
                 TextStyle(color: cs.onSurface.withOpacity(0.3), fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ManualDownloadDialog extends StatelessWidget {
+  final String url;
+  const _ManualDownloadDialog({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2A2A45)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.link_off_rounded, color: cs.error, size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  'Download Link',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'The automatic download was blocked by your browser. Please use the options below:',
+              style: TextStyle(
+                  fontSize: 13, color: cs.onSurface.withOpacity(0.6), height: 1.5),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F0F1A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2A2A45)),
+              ),
+              child: SelectableText(
+                url,
+                style: TextStyle(fontSize: 11, color: cs.primary, height: 1.4),
+                maxLines: 3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Close',
+                      style: TextStyle(color: cs.onSurface.withOpacity(0.5))),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      final Uri uri = Uri.parse(url);
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } catch (e) {
+                      debugPrint('Retry launch failed: $e');
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Open'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2A2A45),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: url));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Link copied to clipboard')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: const Text('Copy'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

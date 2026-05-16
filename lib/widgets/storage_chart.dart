@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
@@ -51,8 +50,8 @@ class _StorageChartState extends State<StorageChart> {
     int totalFiles = 0;
 
     for (final f in files) {
-      final cat = f.category ?? 'other';
-      final sz = (f.size is int) ? f.size as int : int.tryParse('${f.size}') ?? 0;
+      final cat = f.category;
+      final sz = f.size;
       categorySizes[cat] = (categorySizes[cat] ?? 0) + sz;
       totalSize += sz;
       totalFiles++;
@@ -104,11 +103,18 @@ class _StorageChartState extends State<StorageChart> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A45)),
+        color: const Color(0xFF131326).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF2A2A45), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -188,7 +194,7 @@ class _StorageChartState extends State<StorageChart> {
                 value: '$totalFiles',
                 color: cs.primary,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _StatCard(
                 icon: Icons.data_usage_rounded,
                 label: 'Total Size',
@@ -254,33 +260,43 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      width: 130,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      width: 140,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: cs.onSurface,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 10,
+                    fontWeight: FontWeight.w500,
                     color: cs.onSurface.withOpacity(0.4),
                   ),
                 ),

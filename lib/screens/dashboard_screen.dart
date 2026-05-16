@@ -84,9 +84,36 @@ class _DashboardScreenState extends State<DashboardScreen>
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: cs.surface,
-      body: Row(
+      backgroundColor: const Color(0xFF07070F),
+      body: Stack(
         children: [
+          // Decorative background elements
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.primary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.secondary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Row(
+            children: [
           // Sidebar
           CategorySidebar(
             selectedCategory: _selectedCategory,
@@ -131,6 +158,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ],
       ),
+    ],
+  ),
       floatingActionButton: ScaleTransition(
         scale: _fabScaleAnim,
         child: _UploadFab(onPressed: () {
@@ -166,9 +195,9 @@ class _TopBar extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(bottom: BorderSide(color: const Color(0xFF2A2A45))),
+      decoration: const BoxDecoration(
+        color: Color(0xFF07070F),
+        border: Border(bottom: BorderSide(color: Color(0xFF1E1E35))),
       ),
       child: Row(
         children: [

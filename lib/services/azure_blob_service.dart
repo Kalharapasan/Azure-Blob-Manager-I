@@ -30,14 +30,23 @@ class AzureBlobService {
   }
 
   Uri _buildUrl({String? blobPath, Map<String, String> extraQuery = const {}}) {
-    final List<String> pathSegments = [...Uri.parse(_baseUrl).pathSegments];
+    // Ensure baseUrl doesn't end with slash if blobPath starts with one
+    String base = _baseUrl;
+    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+    
+    final List<String> pathSegments = Uri.parse(base).pathSegments.toList();
     if (blobPath != null && blobPath.isNotEmpty) {
-      pathSegments.addAll(blobPath.split('/'));
+      // Handle both forward and backward slashes, and filter out empty segments
+      pathSegments.addAll(blobPath.split(RegExp(r'[/\\]')).where((s) => s.isNotEmpty));
     }
 
     final query = <String, dynamic>{};
     // Parse existing SAS token parameters
-    final sasUri = Uri.parse('?$_sasToken');
+    // Handle case where sasToken might already have a leading ?
+    String token = _sasToken;
+    if (token.startsWith('?')) token = token.substring(1);
+    
+    final sasUri = Uri.parse('?$token');
     query.addAll(sasUri.queryParameters);
     query.addAll(extraQuery);
 
@@ -166,69 +175,70 @@ class AzureBlobService {
       if (response.statusCode == 200) {
         final String responseBody = response.body;
 
-        final List<String> blobLines = responseBody
-            .split('<Name>')
-            .skip(1)
-            .toList();
+        // More robust XML parsing using RegExp
+        final blobRegex = RegExp(r'<Blob>(.*?)</Blob>', dotAll: true);
+        final nameRegex = RegExp(r'<Name>(.*?)</Name>');
+        final lengthRegex = RegExp(r'<Content-Length>(.*?)</Content-Length>');
+        final lastModRegex = RegExp(r'<Last-Modified>(.*?)</Last-Modified>');
 
-        for (final String line in blobLines) {
-          final int endIndex = line.indexOf('</Name>');
-          if (endIndex > 0) {
-            final String blobName = line.substring(0, endIndex);
-            
-            bool match = false;
-            String fileCategory = category;
-            String fileName = blobName;
-            bool isPrivate = blobName.startsWith('private/');
+        final matches = blobRegex.allMatches(responseBody);
 
-            if (category == 'all') {
-              match = true;
-              final List<String> pathParts = blobName.split('/');
-              if (pathParts.length >= 2) {
-                if (pathParts[0] == 'private' && pathParts.length >= 3) {
-                  fileCategory = pathParts[1];
-                  fileName = pathParts.sublist(2).join('/');
-                } else {
-                  fileCategory = pathParts[0];
-                  fileName = pathParts.sublist(1).join('/');
-                }
+        for (final match in matches) {
+          final blobXml = match.group(1) ?? '';
+          
+          final nameMatch = nameRegex.firstMatch(blobXml);
+          if (nameMatch == null) continue;
+          
+          final String blobName = nameMatch.group(1) ?? '';
+          
+          bool isMatch = false;
+          String fileCategory = 'other';
+          String fileName = blobName;
+          bool isPrivate = blobName.startsWith('private/');
+
+          if (category == 'all') {
+            isMatch = true;
+            final List<String> pathParts = blobName.split('/');
+            if (pathParts.length >= 2) {
+              if (pathParts[0] == 'private' && pathParts.length >= 3) {
+                fileCategory = pathParts[1];
+                fileName = pathParts.sublist(2).join('/');
+              } else {
+                fileCategory = pathParts[0];
+                fileName = pathParts.sublist(1).join('/');
               }
             } else {
-                final String searchPrefix = (category == 'private')
-                  ? 'private/'
-                  : '$category/';
-              if (blobName.startsWith(searchPrefix)) {
-                match = true;
-                fileName = blobName.substring(searchPrefix.length);
-              }
+              // If no folders, try to guess from extension
+              fileCategory = _guessCategory(blobName);
             }
-
-            if (match) {
-              final int contentLengthStart = line.indexOf('<Content-Length>');
-              final int contentLengthEnd = line.indexOf('</Content-Length>');
-              int contentLength = 0;
-              if (contentLengthStart > 0 && contentLengthEnd > contentLengthStart) {
-                contentLength = int.tryParse(line.substring(contentLengthStart + 16, contentLengthEnd)) ?? 0;
-              }
-
-              final int lastModStart = line.indexOf('<Last-Modified>');
-              final int lastModEnd = line.indexOf('</Last-Modified>');
-              DateTime lastModified = DateTime.now();
-              if (lastModStart > 0 && lastModEnd > lastModStart) {
-                lastModified = _parseDate(line.substring(lastModStart + 15, lastModEnd));
-              }
-
-              final FileItem fileItem = FileItem(
-                name: fileName,
-                blobName: blobName,
-                url: _buildUrl(blobPath: blobName).toString(),
-                size: contentLength,
-                category: fileCategory,
-                uploadedAt: lastModified,
-                isPrivate: isPrivate,
-              );
-              files.add(fileItem);
+          } else {
+            final String searchPrefix = (category == 'private')
+                ? 'private/'
+                : '$category/';
+            if (blobName.startsWith(searchPrefix)) {
+              isMatch = true;
+              fileName = blobName.substring(searchPrefix.length);
+              fileCategory = category;
             }
+          }
+
+          if (isMatch) {
+            final lengthMatch = lengthRegex.firstMatch(blobXml);
+            final int contentLength = int.tryParse(lengthMatch?.group(1) ?? '0') ?? 0;
+
+            final lastModMatch = lastModRegex.firstMatch(blobXml);
+            final DateTime lastModified = _parseDate(lastModMatch?.group(1));
+
+            final FileItem fileItem = FileItem(
+              name: fileName,
+              blobName: blobName,
+              url: _buildUrl(blobPath: blobName).toString(),
+              size: contentLength,
+              category: fileCategory,
+              uploadedAt: lastModified,
+              isPrivate: isPrivate,
+            );
+            files.add(fileItem);
           }
         }
       } else {
@@ -240,6 +250,33 @@ class AzureBlobService {
       return files;
     } catch (e) {
       throw Exception('Failed to list files: $e');
+    }
+  }
+
+  String _guessCategory(String fileName) {
+    final String extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return 'image';
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+        return 'video';
+      case 'mp3':
+      case 'wav':
+      case 'm4a':
+        return 'music';
+      case 'pdf':
+      case 'doc':
+      case 'docx':
+      case 'txt':
+        return 'document';
+      default:
+        return 'other';
     }
   }
 
@@ -259,45 +296,45 @@ class AzureBlobService {
 
       if (response.statusCode == 200) {
         final String responseBody = response.body;
-        final List<String> blobLines = responseBody
-            .split('<Name>')
-            .skip(1)
-            .toList();
+        
+        final blobRegex = RegExp(r'<Blob>(.*?)</Blob>', dotAll: true);
+        final nameRegex = RegExp(r'<Name>(.*?)</Name>');
+        final lengthRegex = RegExp(r'<Content-Length>(.*?)</Content-Length>');
 
-        for (final String line in blobLines) {
-          final int endIndex = line.indexOf('</Name>');
+        final matches = blobRegex.allMatches(responseBody);
 
-          if (endIndex > 0) {
-            final String blobName = line.substring(0, endIndex);
-            final List<String> pathParts = blobName.split('/');
-            String category = 'other';
+        for (final match in matches) {
+          final blobXml = match.group(1) ?? '';
+          
+          final nameMatch = nameRegex.firstMatch(blobXml);
+          if (nameMatch == null) continue;
+          
+          final String blobName = nameMatch.group(1) ?? '';
+          final List<String> pathParts = blobName.split('/');
+          String category = 'other';
 
-            if (pathParts.length >= 2) {
-              if (pathParts[0] == 'private' && pathParts.length >= 3) {
-                category = pathParts[1];
-              } else {
-                category = pathParts[0];
-              }
+          if (pathParts.length >= 2) {
+            if (pathParts[0] == 'private' && pathParts.length >= 3) {
+              category = pathParts[1];
+            } else {
+              category = pathParts[0];
             }
-
-            if (!categoryCounts.containsKey(category)) {
-              categoryCounts[category] = 0;
-              categorySizes[category] = 0;
-            }
-
-            final int contentLengthStart = line.indexOf('<Content-Length>');
-            final int contentLengthEnd = line.indexOf('</Content-Length>');
-            int contentLength = 0;
-            if (contentLengthStart > 0 && contentLengthEnd > contentLengthStart) {
-              contentLength = int.tryParse(line.substring(contentLengthStart + 16, contentLengthEnd)) ?? 0;
-            }
-
-            categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
-            categorySizes[category] =
-                (categorySizes[category] ?? 0) + contentLength;
-            totalFiles++;
-            totalSize += contentLength;
+          } else {
+            category = _guessCategory(blobName);
           }
+
+          if (!categoryCounts.containsKey(category)) {
+            categoryCounts[category] = 0;
+            categorySizes[category] = 0;
+          }
+
+          final lengthMatch = lengthRegex.firstMatch(blobXml);
+          final int contentLength = int.tryParse(lengthMatch?.group(1) ?? '0') ?? 0;
+
+          categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+          categorySizes[category] = (categorySizes[category] ?? 0) + contentLength;
+          totalFiles++;
+          totalSize += contentLength;
         }
       } else {
         throw Exception(
@@ -335,11 +372,17 @@ class AzureBlobService {
   }
 
   DateTime _parseDate(String? dateString) {
-    if (dateString == null) return DateTime.now();
+    if (dateString == null || dateString.isEmpty) return DateTime.now();
     try {
-      return DateTime.parse(dateString).toLocal();
+      // Azure returns dates in RFC 1123 format (e.g., "Wed, 21 Oct 2015 07:28:00 GMT")
+      // HttpDate.parse handles this format.
+      return HttpDate.parse(dateString).toLocal();
     } catch (e) {
-      return DateTime.now();
+      try {
+        return DateTime.parse(dateString).toLocal();
+      } catch (_) {
+        return DateTime.now();
+      }
     }
   }
 
