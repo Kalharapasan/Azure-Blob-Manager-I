@@ -155,7 +155,18 @@ class PrivateFileItemWidget extends StatelessWidget {
   }
 
   Widget _getFilePreview(FileItem file) {
-    switch (file.category) {}
+    switch (file.category) {
+      case 'image':
+        return Image.network(file.url);
+      case 'video':
+        return const Text('Video preview not available in dialog. Tap to download and play.');
+      case 'music':
+        return const Text('Audio preview not available in dialog. Tap to download and play.');
+      case 'document':
+        return const Text('Document preview not available. Tap to download and open.');
+      default:
+        return const Text('Preview not available for this file type.');
+    }
   }
 
 }
