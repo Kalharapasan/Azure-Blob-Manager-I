@@ -67,9 +67,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: Column(
               children: [
-                // Storage Dashboard
-                Expanded(
-                  flex: 2,
+                // Storage Dashboard (bounded height to avoid overflow)
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.34,
                   child: StorageChart(),
                 ),
                 // File List

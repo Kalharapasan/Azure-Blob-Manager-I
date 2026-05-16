@@ -47,7 +47,7 @@ class StorageChart extends StatelessWidget {
     });
 
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final double availableHeight = constraints.maxHeight.isFinite
@@ -85,12 +85,20 @@ class StorageChart extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    const SizedBox(height: 12),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
                       children: [
-                        _buildSummaryCard(context, 'Total Files', '${stats['totalFiles'] ?? 0}', Icons.insert_drive_file),
-                        _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
+                          child: _buildSummaryCard(context, 'Total Files', '${stats['totalFiles'] ?? 0}', Icons.insert_drive_file),
+                        ),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: min(300, MediaQuery.of(context).size.width * 0.4)),
+                          child: _buildSummaryCard(context, 'Total Size', '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB', Icons.data_usage),
+                        ),
                       ],
                     ),
                   ],
